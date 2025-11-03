@@ -1,0 +1,266 @@
+---
+title: "Assign3"
+format: html
+---
+
+# Setup
+
+Some packages:
+```{r packages}
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+set_theme(theme_bw()) # for ggplot formatting
+```
+
+Now the data:
+```{r load-data}
+anpp <- read.csv('global_ANPP_data.csv', header = TRUE) |>
+  select(-X) # get rid of "X" column that's an artifact of the file
+str(anpp)
+anpp$region <- as.factor(anpp$region)
+```
+
+# EDA: variable distributions -- Q1 and 2
+
+## Histograms
+
+> note for Noah: the #| lines at the beginning of chunks aren't R code -- they're options for Quarto in knitting and evaluating chunks. #| label: xxxx means label this chunk xxxx for organization/future reference.
+
+```{r}
+#| label: histograms
+#| 
+num_bins <- 10
+mat_hist <- ggplot(anpp, aes(x = MAT))+
+  geom_histogram(color = 'black',
+                 fill = 'lightgrey',
+                 bins = num_bins)+
+  geom_vline(aes(xintercept = mean(MAT)),
+             linetype = 'dashed',
+             color = 'red')+
+  labs(y = 'Count')
+map_hist <- ggplot(anpp, aes(x = MAP))+
+  geom_histogram(color = 'black',
+                 fill = 'lightgrey',
+                 bins = num_bins)+
+  geom_vline(aes(xintercept = mean(MAP)),
+             linetype = 'dashed',
+             color = 'red')+
+  labs(y = 'Count')
+anpp_hist <- ggplot(anpp, aes(x = ANPP))+
+  geom_histogram(color='black',
+                 fill='lightgrey',
+                 bins = num_bins)+
+  geom_vline(aes(xintercept = mean(ANPP)),
+             linetype = 'dashed',
+             color = 'red')+
+  labs(y = 'Count')
+f1 <- anpp_hist+map_hist+mat_hist+plot_layout(axis_titles = 'collect') # edit this later for fig panel labels
+f1
+
+f1&facet_wrap(facets = vars(region))
+```
+
+
+## Scatterplots
+
+```{r}
+#| label: scatterplots
+mat_anpp <- ggplot(anpp, aes(x = MAT, y = ANPP, col = region))+
+  geom_point(alpha = 0.5)
+ # geom_smooth(se = FALSE) # adds LOESS scatterplot smoother
+
+map_anpp <- ggplot(anpp, aes(x = MAP, y = ANPP, col = region))+
+  geom_point(alpha = 0.5)
+#  geom_smooth(se = FALSE) 
+
+map_anpp+mat_anpp+plot_layout(axis_titles = 'collect') # again, edit for figure panel labels
+
+logmap_anpp <- ggplot(anpp, aes(x = log(MAP), y = ANPP, col = region))+
+  geom_point(alpha = 0.5)
+ # geom_smooth(se = FALSE)
+
+logmap_anpp+mat_anpp # again, edit for figure panel labels
+```
+
+
+## Takeaways (Q3)
+
+We can see a few things here:
+
+1. ANPP is positive, continuous, and skewed (from the histogram)
+2. ANPP variance is not constant with respect to MAT (from the scatterplot): higher MAT has higher variance (heteroskedacity)
+3. ANPP is not linearly related to MAP.
+4. MAP is not normally distributed; it is strictly positive and right-skewed. log(MAP) is much closer to normal.
+5. MAT is closer to normally distributed, but it still has a sort of weird shape.
+6. We recover a more linear relationship between log(MAP) and ANPP, but variance is still non-constant.
+7. There may be a relationship
+
+Taking 1 and 2 together, we should use either a Gamma or Inverse Gaussian distribution as the response distribution.
+
+# Approach to modeling
+
+We want to know:
+
+1. Which distribution? Gamma or inverse gaussian?
+2. Which combination of predictors?
+  - Include interactions?
+  - Transform predictors?
+ 
+Gamma vs Inverse Gaussian: 
+https://link.springer.com/chapter/10.1007/978-1-4419-0118-7_11 (found a pdf)
+- Gamma has variance related to mean^2
+- Inverse gaussian has variance related to mean^3
+- We can figure this out by plotting log(variance) against log(means) and seeing whether the slope is closer to 2 or 3.
+- Typically use inverse gaussian with really really severe skew, which I don't think we have. There's some code in the graveyard formalizing this, but Gamma is our best bet I think.
+
+Because Gamma is best bet, we can just look at (2). I think we can start with a saturated model and look at leverage. Based on that, transform predictors and see if that helps with leverage. Then start paring down the model.
+
+
+### Full Model
+
+```{r}
+#| label: running-glms
+
+m1 <- glm(ANPP ~ MAT+MAP+MAT:MAP,
+                  family = Gamma(link = 'log'),
+                  data = anpp)
+
+plot(m1)
+```
+
+#### Full model diagnostics
+
+We have some high leverage points: 37, 38, 46:
+
+```{r}
+#| label: leverage-points
+
+m1_lev <- c(37, 38, 46)
+m1_mat_lev <- anpp[m1_lev, 3]
+m1_map_lev <- anpp[m1_lev, 4]
+
+hist(anpp$MAT)
+abline(v = m1_mat_lev, col = 'red')
+
+hist(anpp$MAP)
+abline(v = m1_map_lev, col = 'red')
+```
+
+We can see that, in fact, the high leverage points for MAP are on the tail end. So then we can log-transform the MAP data to get it better behaved:
+
+```{r}
+#| label: examine-leverage
+hist(log(anpp$MAP))
+abline(v = log(m1_map_lev), col = 'red')
+```
+
+
+While these points still fall on the tails, they may have less leverage now.
+
+### Full Model - Log(MAP)
+
+```{r}
+#| label: full-model-log
+full_log <- glm(ANPP ~ MAT+log(MAP)+MAT:log(MAP),
+                family = Gamma(link = 'log'),
+                data = anpp)
+plot(full_log)
+```
+
+Leverage plot looks a lot better, but residuals are a bit wonky at the tail end of the CDF (Q-Q plot).
+
+```{r}
+anpp[c(283, 308, 38),]
+```
+
+
+
+# Predictor Transformations, from Dave
+
+Recall that in a GLM, we are modelling 
+
+$$
+ g(\mu) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 +...
+$$
+That is, we model a function of the mean as a linear combination of the predictors. That means that when we transform a predictor, we are saying that $g(\mu)$ is a function of the *transformation* of that predictor. 
+
+Example:
+
+Gamma distribution with log link. Log link means we are modeling:
+
+$$
+\log(\mu) = \beta_0 + \beta_1 x_1 + \beta_2 x_2+...
+$$
+
+Let's just take the simplest case with one predictor:
+
+$$
+\log(\mu) = \beta_0 + \beta_1 x
+$$
+
+Then log-transforming x would mean that we expect the relationship between $\log(\mu)$ and $\log(x)$ to be linear.
+
+In a context with multiple predictor variables, including a transformed term can be:
+
+- Because we have prior reason to do so, e.g., we know that volume is cubically related to radius
+- Because we need to "pull" the curvature of the fitted term in some way.
+
+In the second case, we figure this out by first fitting a model with untransformed predictors, then looking at the distance and leverage plots. If there are high-leverage points that are on the tail of a skewed predictor, we can consider transforming the predictor to lessen the skew and therefore reduce the leverage of those points.
+
+This whole thing looks a lot like just log transforming the response...but the key difference is that, by using a Gamma distribution, we allow both the mean AND the variance to vary as a function of the predictors. Dave drove a picture on the board that had log(response) vs predictor, and the idea is that you expect a right-skewed distribution in log(response) values at each predictor value (as opposed to a normal distribution in log(response) at each predictor value), AND that you expect those right-skewed distributions to change shape with increasing predictor values.
+
+# Graveyard 
+
+Since MAP is not super well behaved, let's try some transformations. Since MAP is positive and non-zero, we could try log or square root transforms. 
+
+```{r}
+#| label: graveyard1
+#| eval: FALSE
+#| echo: FALSE
+
+# log transform map
+logmap_hist <- ggplot(anpp, aes(x = log(MAP)))+
+    geom_histogram(color = 'black',
+                 fill = 'lightgrey',
+                 bins = num_bins)+
+  geom_vline(aes(xintercept = mean(log(MAP))),
+             linetype = 'dashed',
+             color = 'red')+
+  labs(y = 'Count')
+
+# square root transform map
+sqrtmap_hist <- ggplot(anpp, aes(x = sqrt(MAP)))+
+    geom_histogram(color = 'black',
+                 fill = 'lightgrey',
+                 bins = num_bins)+
+  geom_vline(aes(xintercept = mean(sqrt(MAP))),
+             linetype = 'dashed',
+             color = 'red')+
+  labs(y = 'Count')
+
+logmap_hist+sqrtmap_hist
+```
+
+Clearly log does a better job of dealing with the weird distribution of MAP data. I'm not sure there's much to do about MAT because it contains negative values (ruling out square root) and zero (ruling out log). A reciprocal transform (1/MAT) would just push all the values toward the interval (0, 1) and not necessarily help. We could try a polynomial transform...but I don't think that is well supported either theoretically or in the scatterplot shown below. Also, using an even power will give us a bimodal distribution because negative and positive values with the same absolute value get mapped to the same squared (or ^4, ^6...) value.
+
+## Gamma vs inv gaus
+Let's look at log(variance) vs log(means). We'll approximate this by grouping MAP and MAT and calculating variance and mean for each group.
+
+```{r}
+#| label: variance-mean
+
+# group MAP and MAT into 4 groups (number picked somewhat arbitrarily)
+anpp$matg <- cut(anpp$MAT, breaks = 4)
+anpp$mapg <- cut(anpp$MAP, breaks = 4)
+
+# get variances for each MAT group/MAP group combination
+var <- tapply(anpp$ANPP, list(anpp$matg, anpp$mapg), FUN = 'var')
+means <- tapply(anpp$ANPP, list(anpp$matg, anpp$mapg), FUN = 'mean')
+
+# plot
+plot(log(var), log(means))
+
+lm(c(log(var)) ~ c(log(means)))
+
+```
