@@ -23,10 +23,6 @@ Now the data:
 anpp <- read.csv('global_ANPP_data.csv', header = TRUE) |>
   select(-X) # get rid of "X" column that's an artifact of the file
 str(anpp)
-anpp$region <- as.factor(anpp$region)
-table(anpp$region)
-
-anpp_f <- filter(anpp, region != 'AF') # filter out AF for low sample size
 ```
 
 AF only has 3 observations; if we include region as a factor, we should exclude these data because there just aren't enough to make robust inference.
@@ -46,7 +42,6 @@ A histogram plotting function to avoid a ton of redundant code:
 
 plot_hist <- function(data, 
                       var,
-                      rgn = FALSE, 
                       color = 'grey20',
                       fill = 'lightgrey',
                       fill_alpha = 0.75,
@@ -54,24 +49,13 @@ plot_hist <- function(data,
                       add_mean = TRUE,
                       line_col = 'red',
                       line_type = 'dashed'){
-  p <- ggplot(data)
-  
-  # First, construct histograms either with fill by region or not
-  if(rgn == FALSE){
-    p <- p+geom_histogram(aes(x = {{var}}),
-                            color = color,
-                            fill = fill,
-                            bins = num_bins)+
+  p <- ggplot(data)+
+    geom_histogram(aes(x = {{var}}),
+                   color = color,
+                   fill = fill,
+                   bins = num_bins)+
       labs(y = 'Count')
-  }else{
-    p <- p+geom_histogram(aes(x = {{var}},
-                              fill = region),
-                            alpha = fill_alpha,
-                            color = color,
-                            bins = num_bins)+
-      labs(y = 'Count',
-           fill = 'Region')
-  }
+  
 
   if(add_mean == TRUE){
     p <- p+geom_vline(aes(xintercept = mean({{var}})),
@@ -91,42 +75,22 @@ And now let's use the code to make some histograms.
 #| 
 
 # MAT
-## Overall
 mat_hist <- plot_hist(data = anpp,
                       var = MAT)
 
-## by region
-mat_hist_rgn <- plot_hist(data = anpp_f,
-                          var = MAT,
-                          rgn = TRUE)
-
 # MAP
-## Overall
 map_hist <- plot_hist(data = anpp,
                       var = MAP)
 
-## by region
-map_hist_rgn <- plot_hist(data = anpp_f,
-                          var = MAP,
-                          rgn = TRUE)
 
 # ANPP
-## Overall
 anpp_hist <- plot_hist(data = anpp,
                        var = ANPP)
-
-## by region
-anpp_hist_rgn <- plot_hist(data = anpp_f,
-                           var = ANPP,
-                           rgn = TRUE)
 
 # Now make a figure:
 ## Overall
 mat_hist+map_hist+anpp_hist+plot_layout(axis_titles = 'collect')
 
-## By region
-mat_hist_rgn+map_hist_rgn+anpp_hist_rgn+plot_layout(axis_titles = 'collect',
-                                                    guides = 'collect')
 ```
 
 
@@ -138,58 +102,23 @@ Again, a function to save typing. Since we're going to be using a gamma distribu
 plot_scatter <- function(data,
                          xvar,
                          yvar = log(ANPP),
-                         rgn = FALSE,
                          pt_alpha = 0.5,
-                         smooths = 'global',
+                         smooths = TRUE,
                          smooth_col = 'blue',
                          smooth_lty = 'dashed',
                          smooth_lty_rgn = 'solid'){
-  # fail fast
-  stopifnot(smooths %in% c('all', 'global', 'region', 'none'))
   
   # plot template
-  p <- ggplot(data, aes(x = {{xvar}}, y = {{yvar}}))
-
-  if(rgn == FALSE){
-    p <- p+geom_point(alpha = pt_alpha)
-  }else{
-    p <- p+geom_point(aes(color = region), alpha = pt_alpha)+
-      labs(color = 'Region')
-  }
-    
-  if(smooths == 'global'){
-    p <- p+geom_smooth(inherit.aes = FALSE,
-                       aes(x = {{xvar}},
-                           y = {{yvar}}),
-                         formula = y ~ x,
-                         method = 'loess',
-                         se = FALSE,
-                         col = smooth_col,
-                         linetype = smooth_lty)
-    }else if(smooths == 'region'){
-      p <- p+geom_smooth(se = FALSE,
-                         formula = y ~ x,
-                         method = 'loess',
-                         linetype = smooth_lty_rgn)
-    }else if(smooths == 'all'){
-      p <- p+geom_smooth(aes(color = region),
-                    se = FALSE,
-                         formula = y ~ x,
-                         method = 'loess',
-                         linetype = smooth_lty_rgn)+
-        geom_smooth(inherit.aes = FALSE,
-                       aes(x = {{xvar}},
-                           y = {{yvar}}),
-                         formula = y ~ x,
-                         method = 'loess',
-                         se = FALSE,
-                         col = smooth_col,
-                         linetype = smooth_lty)
-        
-    }else{
-      message('no smooths added')
-    }
+  p <- ggplot(data, aes(x = {{xvar}}, y = {{yvar}}))+
+    geom_point(alpha = pt_alpha)
   
+  if(smooths == TRUE){
+    p <- p+geom_smooth(formula = y ~ x,
+                method = 'loess',
+                se = FALSE,
+                col = smooth_col,
+                linetype = smooth_lty)
+  }
   return(p)
 }
 ```
@@ -200,47 +129,22 @@ Using that function:
 #| label: scatterplots
 
 # MAT
-## Overall
 mat_scatter <- plot_scatter(anpp, xvar = MAT, smooth_lty = 'solid')
-
-## Regional
-mat_scatter_rgn <- plot_scatter(anpp_f, 
-                                xvar = MAT, 
-                                rgn = TRUE, 
-                                smooths = 'all',
-                                smooth_col = 'black')
 
 
 # MAP
-## Overall
 map_scatter <- plot_scatter(anpp, xvar = MAP, smooth_lty = 'solid')
 
-## Regional
-map_scatter_rgn <- plot_scatter(anpp_f, 
-                                xvar = MAP, 
-                                rgn = TRUE, 
-                                smooths = 'all',
-                                smooth_col = 'black')
 
 
 # Log MAP
-## Overall
 log_map_scatter <- plot_scatter(anpp, xvar = log(MAP), smooth_lty = 'solid')
 
-## Regional
-log_map_scatter_rgn <- plot_scatter(anpp_f, 
-                                xvar = log(MAP), 
-                                rgn = TRUE, 
-                                smooths = 'all',
-                                smooth_col = 'black')
 
 # Figures
 ## Overall
 map_scatter+mat_scatter+plot_layout(axis_titles = 'collect') 
 
-## Regional
-map_scatter_rgn+mat_scatter_rgn+plot_layout(axis_titles = 'collect',
-                                            guides = 'collect')
 
 ## Log vs untransformed
 map_scatter+log_map_scatter+plot_layout(axis_titles = 'collect')
@@ -258,7 +162,6 @@ We can see a few things here:
 4. MAP is not normally distributed; it is strictly positive and right-skewed. log(MAP) is much closer to normal.
 5. MAT is closer to normally distributed, but it still has a sort of weird shape.
 6. We recover a more linear relationship between log(MAP) and ANPP, but variance is still non-constant.
-7. There may be regional differences in distribution of MAP, MAT, and ANPP. Especially when it comes to MAT, region may help increase amount of variance explained toward the tail end of the MAT distribution
 
 Taking 1 and 2 together, we should use either a Gamma or Inverse Gaussian distribution as the response distribution.
 
@@ -280,135 +183,12 @@ https://link.springer.com/chapter/10.1007/978-1-4419-0118-7_11 (found a pdf)
 
 Because Gamma is best bet, we can just look at (2). I think we can start with a saturated model and look at leverage. Based on that, transform predictors and see if that helps with leverage. Then start paring down the model.
 
-# Including region
 
-## Full Model
-
-### Running 
-
-Including region, MAT, and MAP with all interactions:
-
-```{r}
-m1_rgn <- glm(ANPP ~ MAT*MAP*region,
-              family = Gamma(link = 'log'),
-              data = anpp_f)
-
-# with log-transformed MAP
-m1_rgn_log <- glm(ANPP ~ MAT*log(MAP)*region,
-                  family = Gamma(link = 'log'),
-                  data = anpp_f)
-```
-
-
-
-### Diagnostics
-
-First, let's see if log-transforming makes a difference:
-
-```{r}
-AIC(m1_rgn, m1_rgn_log)
-```
-It looks like there is marginal improvement by including the log-transform.
-
-Let's unpack this a little further by looking at diagnostic plots:
-```{r}
-plot(m1_rgn)
-```
-
-It looks like we don't have any super influential points (i.e., points with high Cook's distance). However, there is some weird tail behavior in the Q-Q plot at the upper end. Let's look at the log model:
-
-```{r}
-plot(m1_rgn_log)
-```
-
-These results look pretty similar to before. Let's compare residuals vs fitted side by side:
-
-```{r}
-par(mfrow = c(1, 2))
-plot(m1_rgn, which = 1)
-plot(m1_rgn_log, which = 1)
-```
-These also look very similar; some of the tail residuals on either end have been moved a little closer to 0, though.
-
-### ANOVA
-
-Now let's see how we can pare back the log model using ANOVA.
-
-```{r}
-anova(m1_rgn_log, test = 'Chisq')
-```
-
-This is interesting. Dropping the three-way interaction term leads to a large increase in residual deviance (i.e., the fitted model gets further from the saturated model), but the pairwise interactions don't necessarily have the same effect. Dropping any one of the non-interaction terms leads to a larger increase in residual deviance.
-
-## Simplified model 2
-
-### Running
-
-Let's run our simplified model with the three-way interaction term and the individual terms.
-
-```{r}
-m2_rgn_log <- glm(ANPP ~ MAT+log(MAP)+region+MAT:log(MAP):region,
-                  family = Gamma(link = 'log'),
-                  data = anpp_f)
-```
-
-### Diagnostics
-
-First, let's see if this is an improvement over our previous model. 
-
-```{r}
-AIC(m1_rgn_log, m2_rgn_log)
-```
-We actually see that the previous model had a lower AIC, so this model is not necessarily an improvement. Let's look at diagnostic plots:
-
-```{r}
-plot(m2_rgn_log)
-```
-
-
-And look at analysis of deviance:
-
-```{r}
-anova(m2_rgn_log, test = 'Chisq')
-```
-We may be able to drop the 3-way interaction term entirely.
-
-## Simplified model 3
-
-### Running the model
-
-Let's try just including the single terms and no interaction:
-
-```{r}
-m3_rgn_log <- glm(ANPP ~ MAT+log(MAP)+region,
-                  family = Gamma(link = 'log'),
-                  data = anpp_f)
-```
-
-
-### Diagnostics
-
-```{r}
-AIC(m1_rgn_log, m2_rgn_log, m3_rgn_log)
-```
-
-M1 still "wins" with the lowest AIC.
-
-```{r}
-plot(m3_rgn_log)
-```
 
 From the plots, we see that the residuals vs leverage plot and the scale-location plot actually look worse than the original full model.
 
-```{r}
-anova(m3_rgn_log)
-```
 
-All our terms have a significant contribution, though.
-
-# Modeling -- no region
-
-Let's ignore region and see what we get.
+# Modeling 
 
 ## Full Model
 
@@ -459,7 +239,7 @@ While these points still fall on the tails, they may have less leverage now. Let
 #| label: full-model-log
 m1_log <- glm(ANPP ~ MAT*log(MAP),
                 family = Gamma(link = 'log'),
-                data = anpp_f)
+                data = anpp)
 plot(m1_log)
 ```
 
@@ -490,7 +270,7 @@ Let's remove the interaction term. If all is right in the world, our ANOVA and A
 ```{r}
 m2_log <- glm(ANPP ~ log(MAP)+MAT,
               family = Gamma(link = 'log'),
-              data = anpp_f)
+              data = anpp)
 ```
 
 ### Diagnostics
@@ -502,22 +282,17 @@ plot(m2_log)
 Residuals vs fitted looks a little funky here. Let's use AIC to compare this model to the full model. If all is right in the world, this will have a higher AIC (agreeing with the ANOVA results):
 
 ```{r}
-AIC(m1_log, m2_log)
+AIC(m1_log, m2_log, m1) |>
+  arrange(AIC)
 ```
 
-We do in fact see a higher AIC with this model, as expected.
+These results are as expected.
 
-# Comparing region with no region
+# Coefficients and interpretation
 
-Finally, let's compare all our models:
+Now that we have selected our best-fitting model, let's look at the coefficients:
 
 ```{r}
-AIC(m1_log, 
-    m2_log,
-    m1_rgn_log,
-    m2_rgn_log,
-    m3_rgn_log) |>
-  arrange(AIC) # arrange in order of increasing AIC
+summary(m1_log)
 ```
 
-The regional model has the lowest AIC, and models that include region out perform all other models.
