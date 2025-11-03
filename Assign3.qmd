@@ -6,7 +6,9 @@ format: html
 # Setup
 
 Some packages:
-```{r packages}
+```{r}
+#| label: packages
+#| collapse: TRUE
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -15,7 +17,9 @@ set_theme(theme_bw()) # for ggplot formatting
 ```
 
 Now the data:
-```{r load-data}
+```{r}
+#| label: load-data
+#| collapse: TRUE
 anpp <- read.csv('global_ANPP_data.csv', header = TRUE) |>
   select(-X) # get rid of "X" column that's an artifact of the file
 str(anpp)
@@ -80,13 +84,15 @@ plot_hist <- function(data,
 ```
 
 
+And now let's use the code to make some histograms.
+
 ```{r}
 #| label: histograms
 #| 
 
 # MAT
 ## Overall
-mat_hist <- plot_hist(data = anpp_f,
+mat_hist <- plot_hist(data = anpp,
                       var = MAT)
 
 ## by region
@@ -96,7 +102,7 @@ mat_hist_rgn <- plot_hist(data = anpp_f,
 
 # MAP
 ## Overall
-map_hist <- plot_hist(data = anpp_f,
+map_hist <- plot_hist(data = anpp,
                       var = MAP)
 
 ## by region
@@ -106,7 +112,7 @@ map_hist_rgn <- plot_hist(data = anpp_f,
 
 # ANPP
 ## Overall
-anpp_hist <- plot_hist(data = anpp_f,
+anpp_hist <- plot_hist(data = anpp,
                        var = ANPP)
 
 ## by region
@@ -126,12 +132,12 @@ mat_hist_rgn+map_hist_rgn+anpp_hist_rgn+plot_layout(axis_titles = 'collect',
 
 ## Scatterplots
 
-Again, a function to save typing:
+Again, a function to save typing. Since we're going to be using a gamma distribution with a log link, let's examine linearity of predictors WRT log(ANPP) (though this behavior is customizable with the `yvar` option).
 
 ```{r}
 plot_scatter <- function(data,
                          xvar,
-                         yvar = ANPP,
+                         yvar = log(ANPP),
                          rgn = FALSE,
                          pt_alpha = 0.5,
                          smooths = 'global',
@@ -188,13 +194,14 @@ plot_scatter <- function(data,
 }
 ```
 
+Using that function:
 
 ```{r}
 #| label: scatterplots
 
 # MAT
 ## Overall
-mat_scatter <- plot_scatter(anpp_f, xvar = MAT, smooth_lty = 'solid')
+mat_scatter <- plot_scatter(anpp, xvar = MAT, smooth_lty = 'solid')
 
 ## Regional
 mat_scatter_rgn <- plot_scatter(anpp_f, 
@@ -206,7 +213,7 @@ mat_scatter_rgn <- plot_scatter(anpp_f,
 
 # MAP
 ## Overall
-map_scatter <- plot_scatter(anpp_f, xvar = MAP, smooth_lty = 'solid')
+map_scatter <- plot_scatter(anpp, xvar = MAP, smooth_lty = 'solid')
 
 ## Regional
 map_scatter_rgn <- plot_scatter(anpp_f, 
@@ -218,7 +225,7 @@ map_scatter_rgn <- plot_scatter(anpp_f,
 
 # Log MAP
 ## Overall
-log_map_scatter <- plot_scatter(anpp_f, xvar = log(MAP), smooth_lty = 'solid')
+log_map_scatter <- plot_scatter(anpp, xvar = log(MAP), smooth_lty = 'solid')
 
 ## Regional
 log_map_scatter_rgn <- plot_scatter(anpp_f, 
@@ -232,12 +239,11 @@ log_map_scatter_rgn <- plot_scatter(anpp_f,
 map_scatter+mat_scatter+plot_layout(axis_titles = 'collect') 
 
 ## Regional
-map_scatter_rgn/mat_scatter_rgn+plot_layout(axis_titles = 'collect')
+map_scatter_rgn+mat_scatter_rgn+plot_layout(axis_titles = 'collect',
+                                            guides = 'collect')
 
 ## Log vs untransformed
 map_scatter+log_map_scatter+plot_layout(axis_titles = 'collect')
-
-
 
 ```
 
@@ -274,22 +280,144 @@ https://link.springer.com/chapter/10.1007/978-1-4419-0118-7_11 (found a pdf)
 
 Because Gamma is best bet, we can just look at (2). I think we can start with a saturated model and look at leverage. Based on that, transform predictors and see if that helps with leverage. Then start paring down the model.
 
+# Including region
 
-### Full Model
+## Full Model
+
+### Running 
+
+Including region, MAT, and MAP with all interactions:
 
 ```{r}
-#| label: running-glms
+m1_rgn <- glm(ANPP ~ MAT*MAP*region,
+              family = Gamma(link = 'log'),
+              data = anpp_f)
 
-m1 <- glm(ANPP ~ MAT+MAP+MAT:MAP,
+# with log-transformed MAP
+m1_rgn_log <- glm(ANPP ~ MAT*log(MAP)*region,
                   family = Gamma(link = 'log'),
-                  data = anpp)
+                  data = anpp_f)
+```
 
+
+
+### Diagnostics
+
+First, let's see if log-transforming makes a difference:
+
+```{r}
+AIC(m1_rgn, m1_rgn_log)
+```
+It looks like there is marginal improvement by including the log-transform.
+
+Let's unpack this a little further by looking at diagnostic plots:
+```{r}
+plot(m1_rgn)
+```
+
+It looks like we don't have any super influential points (i.e., points with high Cook's distance). However, there is some weird tail behavior in the Q-Q plot at the upper end. Let's look at the log model:
+
+```{r}
+plot(m1_rgn_log)
+```
+
+These results look pretty similar to before. Let's compare residuals vs fitted side by side:
+
+```{r}
+par(mfrow = c(1, 2))
+plot(m1_rgn, which = 1)
+plot(m1_rgn_log, which = 1)
+```
+These also look very similar; some of the tail residuals on either end have been moved a little closer to 0, though.
+
+### ANOVA
+
+Now let's see how we can pare back the log model using ANOVA.
+
+```{r}
+anova(m1_rgn_log, test = 'Chisq')
+```
+
+This is interesting. Dropping the three-way interaction term leads to a large increase in residual deviance (i.e., the fitted model gets further from the saturated model), but the pairwise interactions don't necessarily have the same effect. Dropping any one of the non-interaction terms leads to a larger increase in residual deviance.
+
+## Simplified model 2
+
+### Running
+
+Let's run our simplified model with the three-way interaction term and the individual terms.
+
+```{r}
+m2_rgn_log <- glm(ANPP ~ MAT+log(MAP)+region+MAT:log(MAP):region,
+                  family = Gamma(link = 'log'),
+                  data = anpp_f)
+```
+
+### Diagnostics
+
+First, let's see if this is an improvement over our previous model. 
+
+```{r}
+AIC(m1_rgn_log, m2_rgn_log)
+```
+We actually see that the previous model had a lower AIC, so this model is not necessarily an improvement. Let's look at diagnostic plots:
+
+```{r}
+plot(m2_rgn_log)
+```
+
+
+And look at analysis of deviance:
+
+```{r}
+anova(m2_rgn_log, test = 'Chisq')
+```
+We may be able to drop the 3-way interaction term entirely.
+
+## Simplified model 3
+
+### Running the model
+
+Let's try just including the single terms and no interaction:
+
+```{r}
+m3_rgn_log <- glm(ANPP ~ MAT+log(MAP)+region,
+                  family = Gamma(link = 'log'),
+                  data = anpp_f)
+```
+
+
+### Diagnostics
+
+```{r}
+AIC(m1_rgn_log, m2_rgn_log, m3_rgn_log)
+```
+
+M1 still "wins" with the lowest AIC.
+
+```{r}
+plot(m3_rgn_log)
+```
+
+From the plots, we see that the residuals vs leverage plot and the scale-location plot actually look worse than the original full model.
+
+```{r}
+anova(m3_rgn_log)
+```
+
+All our terms have a significant contribution, though.
+
+# Modeling -- no region
+ 
+Let's compare this with when we exclude region:
+
+```{r}
+m1 <- glm(ANPP ~ MAT*MAP,
+          family = Gamma(link = 'log'),
+          data = anpp)
 plot(m1)
 ```
 
-#### Full model diagnostics
 
-We have some high leverage points: 37, 38, 46:
 
 ```{r}
 #| label: leverage-points
@@ -315,6 +443,8 @@ abline(v = log(m1_map_lev), col = 'red')
 
 
 While these points still fall on the tails, they may have less leverage now.
+
+
 
 ### Full Model - Log(MAP)
 
