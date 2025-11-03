@@ -126,33 +126,119 @@ mat_hist_rgn+map_hist_rgn+anpp_hist_rgn+plot_layout(axis_titles = 'collect',
 
 ## Scatterplots
 
+Again, a function to save typing:
+
+```{r}
+plot_scatter <- function(data,
+                         xvar,
+                         yvar = ANPP,
+                         rgn = FALSE,
+                         pt_alpha = 0.5,
+                         smooths = 'global',
+                         smooth_col = 'blue',
+                         smooth_lty = 'dashed',
+                         smooth_lty_rgn = 'solid'){
+  # fail fast
+  stopifnot(smooths %in% c('all', 'global', 'region', 'none'))
+  
+  # plot template
+  p <- ggplot(data, aes(x = {{xvar}}, y = {{yvar}}))
+
+  if(rgn == FALSE){
+    p <- p+geom_point(alpha = pt_alpha)
+  }else{
+    p <- p+geom_point(aes(color = region), alpha = pt_alpha)+
+      labs(color = 'Region')
+  }
+    
+  if(smooths == 'global'){
+    p <- p+geom_smooth(inherit.aes = FALSE,
+                       aes(x = {{xvar}},
+                           y = {{yvar}}),
+                         formula = y ~ x,
+                         method = 'loess',
+                         se = FALSE,
+                         col = smooth_col,
+                         linetype = smooth_lty)
+    }else if(smooths == 'region'){
+      p <- p+geom_smooth(se = FALSE,
+                         formula = y ~ x,
+                         method = 'loess',
+                         linetype = smooth_lty_rgn)
+    }else if(smooths == 'all'){
+      p <- p+geom_smooth(aes(color = region),
+                    se = FALSE,
+                         formula = y ~ x,
+                         method = 'loess',
+                         linetype = smooth_lty_rgn)+
+        geom_smooth(inherit.aes = FALSE,
+                       aes(x = {{xvar}},
+                           y = {{yvar}}),
+                         formula = y ~ x,
+                         method = 'loess',
+                         se = FALSE,
+                         col = smooth_col,
+                         linetype = smooth_lty)
+        
+    }else{
+      message('no smooths added')
+    }
+  
+  return(p)
+}
+```
+
+
 ```{r}
 #| label: scatterplots
-mat_anpp <- ggplot(anpp, aes(x = MAT, y = ANPP, col = region))+
-  geom_point(alpha = 0.5)+
-  geom_smooth(inherit.aes = FALSE,
-              aes(x = MAT, y = ANPP),
-              se = FALSE,
-              color = 'black',
-              linetype = 'dashed')+ # adds global smoother
-  geom_smooth(se = FALSE) # adds regional smoother
 
-map_anpp <- ggplot(anpp, aes(x = MAP, y = ANPP, col = region))+
-  geom_point(alpha = 0.5)+
-  geom_smooth(inherit.aes = FALSE,
-              aes(x = MAT, y = ANPP),
-              se = FALSE,
-              color = 'black',
-              linetype = 'dashed')+ # add global smoother
-  geom_smooth(se = FALSE) # regional smoother
+# MAT
+## Overall
+mat_scatter <- plot_scatter(anpp_f, xvar = MAT, smooth_lty = 'solid')
 
-map_anpp+mat_anpp+plot_layout(axis_titles = 'collect') # again, edit for figure panel labels
+## Regional
+mat_scatter_rgn <- plot_scatter(anpp_f, 
+                                xvar = MAT, 
+                                rgn = TRUE, 
+                                smooths = 'all',
+                                smooth_col = 'black')
 
-logmap_anpp <- ggplot(anpp, aes(x = log(MAP), y = ANPP, col = region))+
-  geom_point(alpha = 0.5)
- # geom_smooth(se = FALSE)
 
-logmap_anpp+mat_anpp # again, edit for figure panel labels
+# MAP
+## Overall
+map_scatter <- plot_scatter(anpp_f, xvar = MAP, smooth_lty = 'solid')
+
+## Regional
+map_scatter_rgn <- plot_scatter(anpp_f, 
+                                xvar = MAP, 
+                                rgn = TRUE, 
+                                smooths = 'all',
+                                smooth_col = 'black')
+
+
+# Log MAP
+## Overall
+log_map_scatter <- plot_scatter(anpp_f, xvar = log(MAP), smooth_lty = 'solid')
+
+## Regional
+log_map_scatter_rgn <- plot_scatter(anpp_f, 
+                                xvar = log(MAP), 
+                                rgn = TRUE, 
+                                smooths = 'all',
+                                smooth_col = 'black')
+
+# Figures
+## Overall
+map_scatter+mat_scatter+plot_layout(axis_titles = 'collect') 
+
+## Regional
+map_scatter_rgn/mat_scatter_rgn+plot_layout(axis_titles = 'collect')
+
+## Log vs untransformed
+map_scatter+log_map_scatter+plot_layout(axis_titles = 'collect')
+
+
+
 ```
 
 
