@@ -70,35 +70,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="Assign3_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="Assign3_files/libs/bootstrap/bootstrap-81267100e462c21b3d6c0d5bf76a3417.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 </head>
 
@@ -728,48 +699,59 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </section>
 <section id="modeling-no-region" class="level1">
 <h1>Modeling – no region</h1>
-<p>Let’s compare this with when we exclude region:</p>
+<p>Let’s ignore region and see what we get.</p>
+<section id="full-model-1" class="level2">
+<h2 class="anchored" data-anchor-id="full-model-1">Full Model</h2>
+<p>As always, we’ll start by running a full model.</p>
+<section id="running-the-model-1" class="level3">
+<h3 class="anchored" data-anchor-id="running-the-model-1">Running the model</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>m1 <span class="ot">&lt;-</span> <span class="fu">glm</span>(ANPP <span class="sc">~</span> MAT<span class="sc">*</span>MAP,</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>          <span class="at">family =</span> <span class="fu">Gamma</span>(<span class="at">link =</span> <span class="st">'log'</span>),</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">data =</span> anpp)</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(m1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="Assign3_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>          <span class="at">data =</span> anpp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-</div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="Assign3_files/figure-html/unnamed-chunk-16-2.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="Assign3_files/figure-html/unnamed-chunk-16-3.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="Assign3_files/figure-html/unnamed-chunk-16-4.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
-</div>
-</div>
+</section>
+<section id="diagnostics-3" class="level3">
+<h3 class="anchored" data-anchor-id="diagnostics-3">Diagnostics</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>m1_lev <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">37</span>, <span class="dv">38</span>, <span class="dv">46</span>)</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>m1_mat_lev <span class="ot">&lt;-</span> anpp[m1_lev, <span class="dv">3</span>]</span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>m1_map_lev <span class="ot">&lt;-</span> anpp[m1_lev, <span class="dv">4</span>]</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(anpp<span class="sc">$</span>MAT)</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> m1_mat_lev, <span class="at">col =</span> <span class="st">'red'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(m1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-17-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-17-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-17-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>We have some higher leverage points (but still within acceptable Cook’s distance); let’s see where these points fall on the distribution of MAT and MAP:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>m1_lev <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">37</span>, <span class="dv">38</span>, <span class="dv">46</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>m1_mat_lev <span class="ot">&lt;-</span> anpp[m1_lev, <span class="dv">3</span>]</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>m1_map_lev <span class="ot">&lt;-</span> anpp[m1_lev, <span class="dv">4</span>]</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(anpp<span class="sc">$</span>MAT)</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> m1_mat_lev, <span class="at">col =</span> <span class="st">'red'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -777,8 +759,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(anpp<span class="sc">$</span>MAP)</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> m1_map_lev, <span class="at">col =</span> <span class="st">'red'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(anpp<span class="sc">$</span>MAP)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> m1_map_lev, <span class="at">col =</span> <span class="st">'red'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -789,8 +771,8 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 <p>We can see that, in fact, the high leverage points for MAP are on the tail end. So then we can log-transform the MAP data to get it better behaved:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(<span class="fu">log</span>(anpp<span class="sc">$</span>MAP))</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="fu">log</span>(m1_map_lev), <span class="at">col =</span> <span class="st">'red'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(<span class="fu">log</span>(anpp<span class="sc">$</span>MAP))</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="fu">log</span>(m1_map_lev), <span class="at">col =</span> <span class="st">'red'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -799,14 +781,12 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 </div>
 </div>
-<p>While these points still fall on the tails, they may have less leverage now.</p>
-<section id="full-model---logmap" class="level3">
-<h3 class="anchored" data-anchor-id="full-model---logmap">Full Model - Log(MAP)</h3>
+<p>While these points still fall on the tails, they may have less leverage now. Let’s check:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>full_log <span class="ot">&lt;-</span> <span class="fu">glm</span>(ANPP <span class="sc">~</span> MAT<span class="sc">+</span><span class="fu">log</span>(MAP)<span class="sc">+</span>MAT<span class="sc">:</span><span class="fu">log</span>(MAP),</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">family =</span> <span class="fu">Gamma</span>(<span class="at">link =</span> <span class="st">'log'</span>),</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">data =</span> anpp)</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(full_log)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>m1_log <span class="ot">&lt;-</span> <span class="fu">glm</span>(ANPP <span class="sc">~</span> MAT<span class="sc">*</span><span class="fu">log</span>(MAP),</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">family =</span> <span class="fu">Gamma</span>(<span class="at">link =</span> <span class="st">'log'</span>),</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">data =</span> anpp_f)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(m1_log)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -836,79 +816,124 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
 </div>
 </div>
-<p>Leverage plot looks a lot better, but residuals are a bit wonky at the tail end of the CDF (Q-Q plot).</p>
+<p>Leverage plot looks a lot better, but residuals are a bit wonky at the tail end of the CDF (Q-Q plot). Let’s see if this model fits better than the un-logged one, using AIC:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>anpp[<span class="fu">c</span>(<span class="dv">283</span>, <span class="dv">308</span>, <span class="dv">38</span>),]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AIC</span>(m1, m1_log)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in AIC.default(m1, m1_log): models are not all fitted to the same
+number of observations</code></pre>
+</div>
 <div class="cell-output cell-output-stdout">
-<pre><code>      ID region  MAT  MAP      ANPP
-283 1137   EMDI -4.0  425  9.978947
-308 1162   EMDI -3.5  287  7.810526
-38   376    Neo 28.0 5750 29.200000</code></pre>
+<pre><code>       df      AIC
+m1      5 2712.576
+m1_log  5 2671.409</code></pre>
 </div>
 </div>
+<p>Looks like, as we suspected from residuals, that m1_log is better.</p>
 </section>
-</section>
-<section id="predictor-transformations-from-dave" class="level1">
-<h1>Predictor Transformations, from Dave</h1>
-<p>Recall that in a GLM, we are modelling</p>
-<p><span class="math display">\[
-g(\mu) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 +...
-\]</span> That is, we model a function of the mean as a linear combination of the predictors. That means that when we transform a predictor, we are saying that <span class="math inline">\(g(\mu)\)</span> is a function of the <em>transformation</em> of that predictor.</p>
-<p>Example:</p>
-<p>Gamma distribution with log link. Log link means we are modeling:</p>
-<p><span class="math display">\[
-\log(\mu) = \beta_0 + \beta_1 x_1 + \beta_2 x_2+...
-\]</span></p>
-<p>Let’s just take the simplest case with one predictor:</p>
-<p><span class="math display">\[
-\log(\mu) = \beta_0 + \beta_1 x
-\]</span></p>
-<p>Then log-transforming x would mean that we expect the relationship between <span class="math inline">\(\log(\mu)\)</span> and <span class="math inline">\(\log(x)\)</span> to be linear.</p>
-<p>In a context with multiple predictor variables, including a transformed term can be:</p>
-<ul>
-<li>Because we have prior reason to do so, e.g., we know that volume is cubically related to radius</li>
-<li>Because we need to “pull” the curvature of the fitted term in some way.</li>
-</ul>
-<p>In the second case, we figure this out by first fitting a model with untransformed predictors, then looking at the distance and leverage plots. If there are high-leverage points that are on the tail of a skewed predictor, we can consider transforming the predictor to lessen the skew and therefore reduce the leverage of those points.</p>
-<p>This whole thing looks a lot like just log transforming the response…but the key difference is that, by using a Gamma distribution, we allow both the mean AND the variance to vary as a function of the predictors. Dave drove a picture on the board that had log(response) vs predictor, and the idea is that you expect a right-skewed distribution in log(response) values at each predictor value (as opposed to a normal distribution in log(response) at each predictor value), AND that you expect those right-skewed distributions to change shape with increasing predictor values.</p>
-</section>
-<section id="graveyard" class="level1">
-<h1>Graveyard</h1>
-<p>Since MAP is not super well behaved, let’s try some transformations. Since MAP is positive and non-zero, we could try log or square root transforms.</p>
-<p>Clearly log does a better job of dealing with the weird distribution of MAP data. I’m not sure there’s much to do about MAT because it contains negative values (ruling out square root) and zero (ruling out log). A reciprocal transform (1/MAT) would just push all the values toward the interval (0, 1) and not necessarily help. We could try a polynomial transform…but I don’t think that is well supported either theoretically or in the scatterplot shown below. Also, using an even power will give us a bimodal distribution because negative and positive values with the same absolute value get mapped to the same squared (or ^4, ^6…) value.</p>
-<section id="gamma-vs-inv-gaus" class="level2">
-<h2 class="anchored" data-anchor-id="gamma-vs-inv-gaus">Gamma vs inv gaus</h2>
-<p>Let’s look at log(variance) vs log(means). We’ll approximate this by grouping MAP and MAT and calculating variance and mean for each group.</p>
+<section id="anova-1" class="level3">
+<h3 class="anchored" data-anchor-id="anova-1">ANOVA</h3>
+<p>Let’s now look at an analysis of deviance to see if we can pare this model down.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># group MAP and MAT into 4 groups (number picked somewhat arbitrarily)</span></span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>anpp<span class="sc">$</span>matg <span class="ot">&lt;-</span> <span class="fu">cut</span>(anpp<span class="sc">$</span>MAT, <span class="at">breaks =</span> <span class="dv">4</span>)</span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>anpp<span class="sc">$</span>mapg <span class="ot">&lt;-</span> <span class="fu">cut</span>(anpp<span class="sc">$</span>MAP, <span class="at">breaks =</span> <span class="dv">4</span>)</span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="co"># get variances for each MAT group/MAP group combination</span></span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>var <span class="ot">&lt;-</span> <span class="fu">tapply</span>(anpp<span class="sc">$</span>ANPP, <span class="fu">list</span>(anpp<span class="sc">$</span>matg, anpp<span class="sc">$</span>mapg), <span class="at">FUN =</span> <span class="st">'var'</span>)</span>
-<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>means <span class="ot">&lt;-</span> <span class="fu">tapply</span>(anpp<span class="sc">$</span>ANPP, <span class="fu">list</span>(anpp<span class="sc">$</span>matg, anpp<span class="sc">$</span>mapg), <span class="at">FUN =</span> <span class="st">'mean'</span>)</span>
-<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a><span class="co"># plot</span></span>
-<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">log</span>(var), <span class="fu">log</span>(means))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(m1_log)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Analysis of Deviance Table
+
+Model: Gamma, link: log
+
+Response: ANPP
+
+Terms added sequentially (first to last)
+
+             Df Deviance Resid. Df Resid. Dev       F    Pr(&gt;F)    
+NULL                           483     145.34                      
+MAT           1   37.072       482     108.27 195.376 &lt; 2.2e-16 ***
+log(MAP)      1    2.109       481     106.16  11.115 0.0009224 ***
+MAT:log(MAP)  1    4.186       480     101.97  22.063  3.45e-06 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+</div>
+<p>It looks like no: both terms and their interactions contribute significantly to decreasing the residual deviance. Because these models are nested, we don’t even need to use AIC. But just to check, let’s run a model that doesn’t include the interaction term.</p>
+</section>
+</section>
+<section id="simplified-model-2-1" class="level2">
+<h2 class="anchored" data-anchor-id="simplified-model-2-1">Simplified Model 2</h2>
+<section id="running-the-model-2" class="level3">
+<h3 class="anchored" data-anchor-id="running-the-model-2">Running the model</h3>
+<p>Let’s remove the interaction term. If all is right in the world, our ANOVA and AIC results</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>m2_log <span class="ot">&lt;-</span> <span class="fu">glm</span>(ANPP <span class="sc">~</span> <span class="fu">log</span>(MAP)<span class="sc">+</span>MAT,</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">Gamma</span>(<span class="at">link =</span> <span class="st">'log'</span>),</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> anpp_f)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="diagnostics-4" class="level3">
+<h3 class="anchored" data-anchor-id="diagnostics-4">Diagnostics</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(m2_log)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Assign3_files/figure-html/variance-mean-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Assign3_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">lm</span>(<span class="fu">c</span>(<span class="fu">log</span>(var)) <span class="sc">~</span> <span class="fu">c</span>(<span class="fu">log</span>(means)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-21-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-21-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-21-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Residuals vs fitted looks a little funky here. Let’s use AIC to compare this model to the full model. If all is right in the world, this will have a higher AIC (agreeing with the ANOVA results):</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AIC</span>(m1_log, m2_log)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>
-Call:
-lm(formula = c(log(var)) ~ c(log(means)))
-
-Coefficients:
-  (Intercept)  c(log(means))  
-      -0.3398         1.3905  </code></pre>
+<pre><code>       df      AIC
+m1_log  5 2671.409
+m2_log  4 2689.576</code></pre>
 </div>
 </div>
+<p>We do in fact see a higher AIC with this model, as expected.</p>
 </section>
+</section>
+</section>
+<section id="comparing-region-with-no-region" class="level1">
+<h1>Comparing region with no region</h1>
+<p>Finally, let’s compare all our models:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AIC</span>(m1_log, </span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>    m2_log,</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>    m1_rgn_log,</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>    m2_rgn_log,</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>    m3_rgn_log) <span class="sc">|&gt;</span></span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(AIC) <span class="co"># arrange in order of increasing AIC</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           df      AIC
+m1_rgn_log 13 2583.896
+m3_rgn_log  6 2602.144
+m2_rgn_log  9 2604.508
+m1_log      5 2671.409
+m2_log      4 2689.576</code></pre>
+</div>
+</div>
+<p>The regional model has the lowest AIC, and models that include region out perform all other models.</p>
 </section>
 
 </main>
