@@ -8,6 +8,7 @@ format: html
 Some packages:
 ```{r packages}
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(patchwork)
 set_theme(theme_bw()) # for ggplot formatting
@@ -19,7 +20,12 @@ anpp <- read.csv('global_ANPP_data.csv', header = TRUE) |>
   select(-X) # get rid of "X" column that's an artifact of the file
 str(anpp)
 anpp$region <- as.factor(anpp$region)
+table(anpp$region)
+
+anpp_f <- filter(anpp, region != 'AF') # filter out AF for low sample size
 ```
+
+AF only has 3 observations; if we include region as a factor, we should exclude these data because there just aren't enough to make robust inference.
 
 # EDA: variable distributions -- Q1 and 2
 
@@ -27,38 +33,94 @@ anpp$region <- as.factor(anpp$region)
 
 > note for Noah: the #| lines at the beginning of chunks aren't R code -- they're options for Quarto in knitting and evaluating chunks. #| label: xxxx means label this chunk xxxx for organization/future reference.
 
+A histogram plotting function to avoid a ton of redundant code:
+
+```{r}
+#| label: plot-hist
+# We use {{var}} so we can use dplyr-style data masking: from Hadley Wickham
+#> "programming with dplyr" page
+
+plot_hist <- function(data, 
+                      var,
+                      rgn = FALSE, 
+                      color = 'grey20',
+                      fill = 'lightgrey',
+                      fill_alpha = 0.75,
+                      num_bins = 10,
+                      add_mean = TRUE,
+                      line_col = 'red',
+                      line_type = 'dashed'){
+  p <- ggplot(data)
+  
+  # First, construct histograms either with fill by region or not
+  if(rgn == FALSE){
+    p <- p+geom_histogram(aes(x = {{var}}),
+                            color = color,
+                            fill = fill,
+                            bins = num_bins)+
+      labs(y = 'Count')
+  }else{
+    p <- p+geom_histogram(aes(x = {{var}},
+                              fill = region),
+                            alpha = fill_alpha,
+                            color = color,
+                            bins = num_bins)+
+      labs(y = 'Count',
+           fill = 'Region')
+  }
+
+  if(add_mean == TRUE){
+    p <- p+geom_vline(aes(xintercept = mean({{var}})),
+                      color = line_col,
+                      linetype = line_type)
+  }   
+  
+  return(p)
+}
+```
+
+
 ```{r}
 #| label: histograms
 #| 
-num_bins <- 10
-mat_hist <- ggplot(anpp, aes(x = MAT))+
-  geom_histogram(color = 'black',
-                 fill = 'lightgrey',
-                 bins = num_bins)+
-  geom_vline(aes(xintercept = mean(MAT)),
-             linetype = 'dashed',
-             color = 'red')+
-  labs(y = 'Count')
-map_hist <- ggplot(anpp, aes(x = MAP))+
-  geom_histogram(color = 'black',
-                 fill = 'lightgrey',
-                 bins = num_bins)+
-  geom_vline(aes(xintercept = mean(MAP)),
-             linetype = 'dashed',
-             color = 'red')+
-  labs(y = 'Count')
-anpp_hist <- ggplot(anpp, aes(x = ANPP))+
-  geom_histogram(color='black',
-                 fill='lightgrey',
-                 bins = num_bins)+
-  geom_vline(aes(xintercept = mean(ANPP)),
-             linetype = 'dashed',
-             color = 'red')+
-  labs(y = 'Count')
-f1 <- anpp_hist+map_hist+mat_hist+plot_layout(axis_titles = 'collect') # edit this later for fig panel labels
-f1
 
-f1&facet_wrap(facets = vars(region))
+# MAT
+## Overall
+mat_hist <- plot_hist(data = anpp_f,
+                      var = MAT)
+
+## by region
+mat_hist_rgn <- plot_hist(data = anpp_f,
+                          var = MAT,
+                          rgn = TRUE)
+
+# MAP
+## Overall
+map_hist <- plot_hist(data = anpp_f,
+                      var = MAP)
+
+## by region
+map_hist_rgn <- plot_hist(data = anpp_f,
+                          var = MAP,
+                          rgn = TRUE)
+
+# ANPP
+## Overall
+anpp_hist <- plot_hist(data = anpp_f,
+                       var = ANPP)
+
+## by region
+anpp_hist_rgn <- plot_hist(data = anpp_f,
+                           var = ANPP,
+                           rgn = TRUE)
+
+# Now make a figure:
+## Overall
+mat_hist+map_hist+anpp_hist+plot_layout(axis_titles = 'collect')
+
+## By region
+mat_hist_rgn+map_hist_rgn+anpp_hist_rgn+plot_layout(axis_titles = 'collect',
+                                                    guides = 'collect')
 ```
 
 
@@ -67,12 +129,22 @@ f1&facet_wrap(facets = vars(region))
 ```{r}
 #| label: scatterplots
 mat_anpp <- ggplot(anpp, aes(x = MAT, y = ANPP, col = region))+
-  geom_point(alpha = 0.5)
- # geom_smooth(se = FALSE) # adds LOESS scatterplot smoother
+  geom_point(alpha = 0.5)+
+  geom_smooth(inherit.aes = FALSE,
+              aes(x = MAT, y = ANPP),
+              se = FALSE,
+              color = 'black',
+              linetype = 'dashed')+ # adds global smoother
+  geom_smooth(se = FALSE) # adds regional smoother
 
 map_anpp <- ggplot(anpp, aes(x = MAP, y = ANPP, col = region))+
-  geom_point(alpha = 0.5)
-#  geom_smooth(se = FALSE) 
+  geom_point(alpha = 0.5)+
+  geom_smooth(inherit.aes = FALSE,
+              aes(x = MAT, y = ANPP),
+              se = FALSE,
+              color = 'black',
+              linetype = 'dashed')+ # add global smoother
+  geom_smooth(se = FALSE) # regional smoother
 
 map_anpp+mat_anpp+plot_layout(axis_titles = 'collect') # again, edit for figure panel labels
 
@@ -94,7 +166,7 @@ We can see a few things here:
 4. MAP is not normally distributed; it is strictly positive and right-skewed. log(MAP) is much closer to normal.
 5. MAT is closer to normally distributed, but it still has a sort of weird shape.
 6. We recover a more linear relationship between log(MAP) and ANPP, but variance is still non-constant.
-7. There may be a relationship
+7. There may be regional differences in distribution of MAP, MAT, and ANPP. Especially when it comes to MAT, region may help increase amount of variance explained toward the tail end of the MAT distribution
 
 Taking 1 and 2 together, we should use either a Gamma or Inverse Gaussian distribution as the response distribution.
 
