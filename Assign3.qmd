@@ -1,6 +1,8 @@
 ---
 title: "Assign3"
-format: html
+format: 
+  html:
+    toc: true
 ---
 
 # Setup
@@ -10,7 +12,6 @@ Some packages:
 #| label: packages
 #| collapse: TRUE
 library(dplyr)
-library(tidyr)
 library(ggplot2)
 library(patchwork)
 set_theme(theme_bw()) # for ggplot formatting
@@ -251,12 +252,19 @@ AIC(m1, m1_log)
 
 Looks like, as we suspected from residuals, that m1_log is better.
 
+We'll make a figure comparing the residuals vs fitted and cook's distance for both models.
+
+```{r}
+
+```
+
+
 ### ANOVA
 
 Let's now look at an analysis of deviance to see if we can pare this model down.
 
 ```{r}
-anova(m1_log)
+anova(m1_log, test = 'Chisq')
 ```
 
 It looks like no: both terms and their interactions contribute significantly to decreasing the residual deviance. Because these models are nested, we don't even need to use AIC. But just to check, let's run a model that doesn't include the interaction term.
@@ -265,7 +273,7 @@ It looks like no: both terms and their interactions contribute significantly to 
 
 ### Running the model
 
-Let's remove the interaction term. If all is right in the world, our ANOVA and AIC results
+Let's remove the interaction term. If all is right in the world, our ANOVA and AIC results should agree.
 
 ```{r}
 m2_log <- glm(ANPP ~ log(MAP)+MAT,
@@ -279,20 +287,185 @@ m2_log <- glm(ANPP ~ log(MAP)+MAT,
 plot(m2_log)
 ```
 
-Residuals vs fitted looks a little funky here. Let's use AIC to compare this model to the full model. If all is right in the world, this will have a higher AIC (agreeing with the ANOVA results):
+## Simplified model 3 and 4
+This will be MAT only:
 
 ```{r}
-AIC(m1_log, m2_log, m1) |>
+m3_log <- glm(ANPP ~ MAT,
+              family = Gamma(link = 'log'),
+              data = anpp)
+```
+
+And MAP only:
+
+```{r}
+m4_log <- glm(ANPP ~ log(MAP),
+              family = Gamma(link = 'log'),
+              data = anpp)
+```
+
+Let's use AIC to compare this model to the full model. If all is right in the world, this will have a higher AIC (agreeing with the ANOVA results):
+
+```{r}
+AIC(m1_log, m2_log, m3_log, m4_log, m1) |>
   arrange(AIC)
 ```
 
 These results are as expected.
 
-# Coefficients and interpretation
+# Coefficients
 
 Now that we have selected our best-fitting model, let's look at the coefficients:
 
 ```{r}
 summary(m1_log)
+```
+Plotting partial residuals:
+
+```{r}
+par(mfrow = c(1,2))
+termplot(m1_log, data = anpp, partial.resid = TRUE)
+```
+
+# Transforming coefficients
+
+First, some R setup:
+```{r}
+b0 <- m1_log$coefficients[1] # intercept
+b1 <- m1_log$coefficients[2] # MAT
+b2 <- m1_log$coefficients[3] # log(MAP)
+b3 <- m1_log$coefficients[4] # interaction
+```
+
+Now some math. Our model formulation is:
+
+$$
+\log(\text{ANPP}) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log(\text{MAP})+\beta_3 \text{MAT}\log(\text{MAP})
+$$
+
+## MAT coefficient
+
+Consider a 1-unit increase in MAT when log(MAP) is 0. Note $\beta_0 + \beta_2 \log(\text{MAP})+\beta_3 \text{MAT}\log(\text{MAP}) = \beta_0$.
+
+$$
+\log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT}\\
+\log(\text{ANPP}_2) = \beta_0 + \beta_1 (\text{MAT}+1)
+$$
+
+\begin{align}
+\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &= \beta_1 \\
+\log(\frac{\text{ANPP}_2}{\text{ANPP}_1}) &= \beta_1 \\
+\frac{\text{ANPP}_2}{\text{ANPP}_1} &= e^{\beta_1}
+\end{align}
+
+Calculating $e^{\beta_1}$:
+```{r}
+mat_coeff <- exp(b1)
+mat_coeff
+```
+So a 1-unit increase in MAT means a 1.135x increase in ANPP, AKA a 14% increase.
+
+## MAP coefficient
+
+Consider a 10% increase in MAP when MAT is 0. Because MAT = 0, $\beta_0 + \beta_1 \text{MAT} +\beta_3 \text{MAT}\log(\text{MAP}) =  \beta_0$.
+
+$$
+\log(\text{ANPP}_1) = \beta_0 + \beta_2\log(\text{MAP}) \\
+\log(\text{ANPP}_2) = \beta_0 + \beta_2\log(\text{1.1MAP})
+$$
+
+\begin{align}
+\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &= \beta_2(\log(1.1\text{MAP})-\log(\text{MAP})) \\
+\log(\frac{\text{ANPP}_2}{\text{ANPP}_1}) &= \beta_2(\log(\frac{1.1\text{MAP}}{\text{MAP}})) \\
+&= \beta_2 \log(1.1)
+\end{align} 
+
+$\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} = e^{\beta_2 \log(1.1)}$
+
+
+Calculating $e^{\beta_2 \log(1.1)}$:
+```{r}
+map_coeff <- exp(b2*log(1.1))
+map_coeff
+```
+
+So a 10% increase in MAP means a 1.03x increase in ANPP, AKA a 3% increase.
+
+## Interaction
+
+This one is the most involved. 
+
+### MAT constant
+
+Let's first consider the case where MAT is held constant. In this case, we're finding the contribution of MAP conditional on a value of MAT. Then:
+
+$\log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{MAP} + \beta_3 \text{MAT}\log(\text{MAP})$
+
+$\log(\text{ANPP}_2) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{1.1MAP} + \beta_3 \text{MAT}\log(\text{1.1MAP})$
+
+\begin{align}
+\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &= \beta_2(\log(1.1\text{MAP})-\log(\text{MAP})) + \beta_3(\text{MAT}\log(\text{1.1MAP})-\text{MAT}\log(\text{MAP})) \\
+\log(\frac{\text{ANPP}_2}{\text{ANPP}_1}) &= \beta_2 \log(1.1) + \beta_3 \text{MAT}\log(1.1) 
+\end{align}
+
+
+
+\begin{align}
+\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} &= e^{\beta_2 \log(1.1) + \beta_3 \text{MAT}\log(1.1)} \\
+&= e^{\beta_2\log(1.1)}*e^{\beta_3\log(1.1)\text{MAT}} \\
+&= e^{\beta_2\log(1.1)}*\exp({\beta_3\log(1.1)})^{\text{MAT}}
+\end{align}
+
+
+The first part of this is identical to the effect of a 10% increase in MAP on ANPP. Let's calculate the second part:
+
+```{r}
+map_marginal <- exp(b3*log(1.1))
+map_marginal
+```
+
+We can plot this marginal:
+
+```{r}
+mat_vals <- seq(min(anpp$MAT), max(anpp$MAT), length.out = 100)
+plot(mat_vals, map_coeff*map_marginal^mat_vals,
+     xlab = 'MAT value',
+     ylab = 'Marginal effect of MAP|MAT',
+     type = 'l')
+```
+
+### log(MAP) constant
+
+Let's now consider the other case, with log(MAP) held constant:
+
+$\log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{MAP} + \beta_3 \text{MAT}\log(\text{MAP})$
+
+$\log(\text{ANPP}_2) = \beta_0 + \beta_1 \text{MAT+1} + \beta_2 \log\text{MAP} + \beta_3 \text{(MAT+1)}\log(\text{MAP})$
+
+\begin{align}
+\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &= \beta_1(\text{MAT}+1-\text{MAT}) + \beta_3 ((\text{MAT+1})\log(\text{MAP})- \text{MAT}\log(\text{MAP})) \\
+&= \beta_1 + \beta_3\log(\text{MAP}) 
+\end{align}
+
+\begin{align}
+\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} &= e^{\beta_1 + \beta_3 \log\text{MAP}} \\
+&= e^{\beta_1}*e^{\beta_3\log\text{MAP}} \\
+&= e^{\beta_1} \exp(\beta_3)^\text{MAP}
+\end{align}
+
+Similarly, note that the first term here is identical to the transformed coefficient for MAT. Let's calculate the second part:
+
+```{r}
+mat_marginal <- exp(b3)
+mat_marginal
+```
+
+And again, we can plot this marginal effect:
+
+```{r}
+map_vals <- seq(min(anpp$MAP), max(anpp$MAP), length.out = 100)
+plot(map_vals, mat_coeff*mat_marginal^mat_vals, type = 'l',
+     xlab = 'MAP value',
+     ylab = 'Marginal effect of MAT|MAP')
 ```
 

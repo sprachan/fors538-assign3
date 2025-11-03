@@ -70,13 +70,83 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="Assign3_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="Assign3_files/libs/bootstrap/bootstrap-81267100e462c21b3d6c0d5bf76a3417.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
-<body class="fullcontent quarto-light">
+<body class="quarto-light">
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#setup" id="toc-setup" class="nav-link active" data-scroll-target="#setup">Setup</a></li>
+  <li><a href="#eda-variable-distributions-q1-and-2" id="toc-eda-variable-distributions-q1-and-2" class="nav-link" data-scroll-target="#eda-variable-distributions-q1-and-2">EDA: variable distributions – Q1 and 2</a>
+  <ul class="collapse">
+  <li><a href="#histograms" id="toc-histograms" class="nav-link" data-scroll-target="#histograms">Histograms</a></li>
+  <li><a href="#scatterplots" id="toc-scatterplots" class="nav-link" data-scroll-target="#scatterplots">Scatterplots</a></li>
+  <li><a href="#takeaways-q3" id="toc-takeaways-q3" class="nav-link" data-scroll-target="#takeaways-q3">Takeaways (Q3)</a></li>
+  </ul></li>
+  <li><a href="#approach-to-modeling" id="toc-approach-to-modeling" class="nav-link" data-scroll-target="#approach-to-modeling">Approach to modeling</a></li>
+  <li><a href="#modeling" id="toc-modeling" class="nav-link" data-scroll-target="#modeling">Modeling</a>
+  <ul class="collapse">
+  <li><a href="#full-model" id="toc-full-model" class="nav-link" data-scroll-target="#full-model">Full Model</a>
+  <ul class="collapse">
+  <li><a href="#running-the-model" id="toc-running-the-model" class="nav-link" data-scroll-target="#running-the-model">Running the model</a></li>
+  <li><a href="#diagnostics" id="toc-diagnostics" class="nav-link" data-scroll-target="#diagnostics">Diagnostics</a></li>
+  <li><a href="#anova" id="toc-anova" class="nav-link" data-scroll-target="#anova">ANOVA</a></li>
+  </ul></li>
+  <li><a href="#simplified-model-2" id="toc-simplified-model-2" class="nav-link" data-scroll-target="#simplified-model-2">Simplified Model 2</a>
+  <ul class="collapse">
+  <li><a href="#running-the-model-1" id="toc-running-the-model-1" class="nav-link" data-scroll-target="#running-the-model-1">Running the model</a></li>
+  <li><a href="#diagnostics-1" id="toc-diagnostics-1" class="nav-link" data-scroll-target="#diagnostics-1">Diagnostics</a></li>
+  </ul></li>
+  <li><a href="#simplified-model-3-and-4" id="toc-simplified-model-3-and-4" class="nav-link" data-scroll-target="#simplified-model-3-and-4">Simplified model 3 and 4</a></li>
+  </ul></li>
+  <li><a href="#coefficients" id="toc-coefficients" class="nav-link" data-scroll-target="#coefficients">Coefficients</a></li>
+  <li><a href="#transforming-coefficients" id="toc-transforming-coefficients" class="nav-link" data-scroll-target="#transforming-coefficients">Transforming coefficients</a>
+  <ul class="collapse">
+  <li><a href="#mat-coefficient" id="toc-mat-coefficient" class="nav-link" data-scroll-target="#mat-coefficient">MAT coefficient</a></li>
+  <li><a href="#map-coefficient" id="toc-map-coefficient" class="nav-link" data-scroll-target="#map-coefficient">MAP coefficient</a></li>
+  <li><a href="#interaction" id="toc-interaction" class="nav-link" data-scroll-target="#interaction">Interaction</a>
+  <ul class="collapse">
+  <li><a href="#mat-constant" id="toc-mat-constant" class="nav-link" data-scroll-target="#mat-constant">MAT constant</a></li>
+  <li><a href="#logmap-constant" id="toc-logmap-constant" class="nav-link" data-scroll-target="#logmap-constant">log(MAP) constant</a></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -111,10 +181,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="do">## The following objects are masked from 'package:base':</span></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="do">## </span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="do">##     intersect, setdiff, setequal, union</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">set_theme</span>(<span class="fu">theme_bw</span>()) <span class="co"># for ggplot formatting</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">set_theme</span>(<span class="fu">theme_bw</span>()) <span class="co"># for ggplot formatting</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now the data:</p>
 <div class="cell">
@@ -415,12 +484,13 @@ m1_log  5 2688.630</code></pre>
 </div>
 </div>
 <p>Looks like, as we suspected from residuals, that m1_log is better.</p>
+<p>We’ll make a figure comparing the residuals vs fitted and cook’s distance for both models.</p>
 </section>
 <section id="anova" class="level3">
 <h3 class="anchored" data-anchor-id="anova">ANOVA</h3>
 <p>Let’s now look at an analysis of deviance to see if we can pare this model down.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(m1_log)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">anova</span>(m1_log, <span class="at">test =</span> <span class="st">'Chisq'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Analysis of Deviance Table
 
@@ -430,11 +500,11 @@ Response: ANPP
 
 Terms added sequentially (first to last)
 
-             Df Deviance Resid. Df Resid. Dev       F    Pr(&gt;F)    
-NULL                           486     146.05                      
-MAT           1   37.755       485     108.29 200.307 &lt; 2.2e-16 ***
-log(MAP)      1    2.106       484     106.19  11.175 0.0008937 ***
-MAT:log(MAP)  1    4.155       483     102.03  22.046 3.474e-06 ***
+             Df Deviance Resid. Df Resid. Dev  Pr(&gt;Chi)    
+NULL                           486     146.05              
+MAT           1   37.755       485     108.29 &lt; 2.2e-16 ***
+log(MAP)      1    2.106       484     106.19 0.0008293 ***
+MAT:log(MAP)  1    4.155       483     102.03 2.662e-06 ***
 ---
 Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 </div>
@@ -446,7 +516,7 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <h2 class="anchored" data-anchor-id="simplified-model-2">Simplified Model 2</h2>
 <section id="running-the-model-1" class="level3">
 <h3 class="anchored" data-anchor-id="running-the-model-1">Running the model</h3>
-<p>Let’s remove the interaction term. If all is right in the world, our ANOVA and AIC results</p>
+<p>Let’s remove the interaction term. If all is right in the world, our ANOVA and AIC results should agree.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>m2_log <span class="ot">&lt;-</span> <span class="fu">glm</span>(ANPP <span class="sc">~</span> <span class="fu">log</span>(MAP)<span class="sc">+</span>MAT,</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">Gamma</span>(<span class="at">link =</span> <span class="st">'log'</span>),</span>
@@ -460,52 +530,69 @@ Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Assign3_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Assign3_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Assign3_files/figure-html/unnamed-chunk-7-2.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Assign3_files/figure-html/unnamed-chunk-8-2.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Assign3_files/figure-html/unnamed-chunk-7-3.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Assign3_files/figure-html/unnamed-chunk-8-3.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Assign3_files/figure-html/unnamed-chunk-7-4.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Assign3_files/figure-html/unnamed-chunk-8-4.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Residuals vs fitted looks a little funky here. Let’s use AIC to compare this model to the full model. If all is right in the world, this will have a higher AIC (agreeing with the ANOVA results):</p>
+</section>
+</section>
+<section id="simplified-model-3-and-4" class="level2">
+<h2 class="anchored" data-anchor-id="simplified-model-3-and-4">Simplified model 3 and 4</h2>
+<p>This will be MAT only:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AIC</span>(m1_log, m2_log, m1) <span class="sc">|&gt;</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(AIC)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>m3_log <span class="ot">&lt;-</span> <span class="fu">glm</span>(ANPP <span class="sc">~</span> MAT,</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">Gamma</span>(<span class="at">link =</span> <span class="st">'log'</span>),</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> anpp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>And MAP only:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>m4_log <span class="ot">&lt;-</span> <span class="fu">glm</span>(ANPP <span class="sc">~</span> <span class="fu">log</span>(MAP),</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">Gamma</span>(<span class="at">link =</span> <span class="st">'log'</span>),</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> anpp)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Let’s use AIC to compare this model to the full model. If all is right in the world, this will have a higher AIC (agreeing with the ANOVA results):</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AIC</span>(m1_log, m2_log, m3_log, m4_log, m1) <span class="sc">|&gt;</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(AIC)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       df      AIC
 m1_log  5 2688.630
 m2_log  4 2706.760
-m1      5 2712.576</code></pre>
+m1      5 2712.576
+m3_log  3 2714.674
+m4_log  3 2741.541</code></pre>
 </div>
 </div>
 <p>These results are as expected.</p>
 </section>
 </section>
-</section>
-<section id="coefficients-and-interpretation" class="level1">
-<h1>Coefficients and interpretation</h1>
+<section id="coefficients" class="level1">
+<h1>Coefficients</h1>
 <p>Now that we have selected our best-fitting model, let’s look at the coefficients:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m1_log)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m1_log)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:
@@ -530,6 +617,164 @@ AIC: 2688.6
 Number of Fisher Scoring iterations: 5</code></pre>
 </div>
 </div>
+<p>Plotting partial residuals:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">termplot</span>(m1_log, <span class="at">data =</span> anpp, <span class="at">partial.resid =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in termplot(m1_log, data = anpp, partial.resid = TRUE): 'model' appears
+to involve interactions: see the help page</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="transforming-coefficients" class="level1">
+<h1>Transforming coefficients</h1>
+<p>First, some R setup:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>b0 <span class="ot">&lt;-</span> m1_log<span class="sc">$</span>coefficients[<span class="dv">1</span>] <span class="co"># intercept</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>b1 <span class="ot">&lt;-</span> m1_log<span class="sc">$</span>coefficients[<span class="dv">2</span>] <span class="co"># MAT</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>b2 <span class="ot">&lt;-</span> m1_log<span class="sc">$</span>coefficients[<span class="dv">3</span>] <span class="co"># log(MAP)</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>b3 <span class="ot">&lt;-</span> m1_log<span class="sc">$</span>coefficients[<span class="dv">4</span>] <span class="co"># interaction</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now some math. Our model formulation is:</p>
+<p><span class="math display">\[
+\log(\text{ANPP}) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log(\text{MAP})+\beta_3 \text{MAT}\log(\text{MAP})
+\]</span></p>
+<section id="mat-coefficient" class="level2">
+<h2 class="anchored" data-anchor-id="mat-coefficient">MAT coefficient</h2>
+<p>Consider a 1-unit increase in MAT when log(MAP) is 0. Note <span class="math inline">\(\beta_0 + \beta_2 \log(\text{MAP})+\beta_3 \text{MAT}\log(\text{MAP}) = \beta_0\)</span>.</p>
+<p><span class="math display">\[
+\log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT}\\
+\log(\text{ANPP}_2) = \beta_0 + \beta_1 (\text{MAT}+1)
+\]</span></p>
+<p><span class="math display">\[\begin{align}
+\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &amp;= \beta_1 \\
+\log(\frac{\text{ANPP}_2}{\text{ANPP}_1}) &amp;= \beta_1 \\
+\frac{\text{ANPP}_2}{\text{ANPP}_1} &amp;= e^{\beta_1}
+\end{align}\]</span></p>
+<p>Calculating <span class="math inline">\(e^{\beta_1}\)</span>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>mat_coeff <span class="ot">&lt;-</span> <span class="fu">exp</span>(b1)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>mat_coeff</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     MAT 
+1.134962 </code></pre>
+</div>
+</div>
+<p>So a 1-unit increase in MAT means a 1.135x increase in ANPP, AKA a 14% increase.</p>
+</section>
+<section id="map-coefficient" class="level2">
+<h2 class="anchored" data-anchor-id="map-coefficient">MAP coefficient</h2>
+<p>Consider a 10% increase in MAP when MAT is 0. Because MAT = 0, <span class="math inline">\(\beta_0 + \beta_1 \text{MAT} +\beta_3 \text{MAT}\log(\text{MAP}) =  \beta_0\)</span>.</p>
+<p><span class="math display">\[
+\log(\text{ANPP}_1) = \beta_0 + \beta_2\log(\text{MAP}) \\
+\log(\text{ANPP}_2) = \beta_0 + \beta_2\log(\text{1.1MAP})
+\]</span></p>
+<p><span class="math display">\[\begin{align}
+\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &amp;= \beta_2(\log(1.1\text{MAP})-\log(\text{MAP})) \\
+\log(\frac{\text{ANPP}_2}{\text{ANPP}_1}) &amp;= \beta_2(\log(\frac{1.1\text{MAP}}{\text{MAP}})) \\
+&amp;= \beta_2 \log(1.1)
+\end{align}\]</span></p>
+<p><span class="math inline">\(\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} = e^{\beta_2 \log(1.1)}\)</span></p>
+<p>Calculating <span class="math inline">\(e^{\beta_2 \log(1.1)}\)</span>:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>map_coeff <span class="ot">&lt;-</span> <span class="fu">exp</span>(b2<span class="sc">*</span><span class="fu">log</span>(<span class="fl">1.1</span>))</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>map_coeff</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>log(MAP) 
+1.033147 </code></pre>
+</div>
+</div>
+<p>So a 10% increase in MAP means a 1.03x increase in ANPP, AKA a 3% increase.</p>
+</section>
+<section id="interaction" class="level2">
+<h2 class="anchored" data-anchor-id="interaction">Interaction</h2>
+<p>This one is the most involved.</p>
+<section id="mat-constant" class="level3">
+<h3 class="anchored" data-anchor-id="mat-constant">MAT constant</h3>
+<p>Let’s first consider the case where MAT is held constant. In this case, we’re finding the contribution of MAP conditional on a value of MAT. Then:</p>
+<p><span class="math inline">\(\log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{MAP} + \beta_3 \text{MAT}\log(\text{MAP})\)</span></p>
+<p><span class="math inline">\(\log(\text{ANPP}_2) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{1.1MAP} + \beta_3 \text{MAT}\log(\text{1.1MAP})\)</span></p>
+<p><span class="math display">\[\begin{align}
+\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &amp;= \beta_2(\log(1.1\text{MAP})-\log(\text{MAP})) + \beta_3(\text{MAT}\log(\text{1.1MAP})-\text{MAT}\log(\text{MAP})) \\
+\log(\frac{\text{ANPP}_2}{\text{ANPP}_1}) &amp;= \beta_2 \log(1.1) + \beta_3 \text{MAT}\log(1.1)
+\end{align}\]</span></p>
+<p><span class="math display">\[\begin{align}
+\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} &amp;= e^{\beta_2 \log(1.1) + \beta_3 \text{MAT}\log(1.1)} \\
+&amp;= e^{\beta_2\log(1.1)}*e^{\beta_3\log(1.1)\text{MAT}} \\
+&amp;= e^{\beta_2\log(1.1)}*\exp({\beta_3\log(1.1)})^{\text{MAT}}
+\end{align}\]</span></p>
+<p>The first part of this is identical to the effect of a 10% increase in MAP on ANPP. Let’s calculate the second part:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>map_marginal <span class="ot">&lt;-</span> <span class="fu">exp</span>(b3<span class="sc">*</span><span class="fu">log</span>(<span class="fl">1.1</span>))</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>map_marginal</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>MAT:log(MAP) 
+   0.9986033 </code></pre>
+</div>
+</div>
+<p>We can plot this marginal:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>mat_vals <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">min</span>(anpp<span class="sc">$</span>MAT), <span class="fu">max</span>(anpp<span class="sc">$</span>MAT), <span class="at">length.out =</span> <span class="dv">100</span>)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mat_vals, map_coeff<span class="sc">*</span>map_marginal<span class="sc">^</span>mat_vals,</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">'MAT value'</span>,</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylab =</span> <span class="st">'Marginal effect of MAP|MAT'</span>,</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">type =</span> <span class="st">'l'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="logmap-constant" class="level3">
+<h3 class="anchored" data-anchor-id="logmap-constant">log(MAP) constant</h3>
+<p>Let’s now consider the other case, with log(MAP) held constant:</p>
+<p><span class="math inline">\(\log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{MAP} + \beta_3 \text{MAT}\log(\text{MAP})\)</span></p>
+<p><span class="math inline">\(\log(\text{ANPP}_2) = \beta_0 + \beta_1 \text{MAT+1} + \beta_2 \log\text{MAP} + \beta_3 \text{(MAT+1)}\log(\text{MAP})\)</span></p>
+<p><span class="math display">\[\begin{align}
+\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &amp;= \beta_1(\text{MAT}+1-\text{MAT}) + \beta_3 ((\text{MAT+1})\log(\text{MAP})- \text{MAT}\log(\text{MAP})) \\
+&amp;= \beta_1 + \beta_3\log(\text{MAP})
+\end{align}\]</span></p>
+<p><span class="math display">\[\begin{align}
+\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} &amp;= e^{\beta_1 + \beta_3 \log\text{MAP}} \\
+&amp;= e^{\beta_1}*e^{\beta_3\log\text{MAP}} \\
+&amp;= e^{\beta_1} \exp(\beta_3)^\text{MAP}
+\end{align}\]</span></p>
+<p>Similarly, note that the first term here is identical to the transformed coefficient for MAT. Let’s calculate the second part:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>mat_marginal <span class="ot">&lt;-</span> <span class="fu">exp</span>(b3)</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>mat_marginal</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>MAT:log(MAP) 
+    0.985442 </code></pre>
+</div>
+</div>
+<p>And again, we can plot this marginal effect:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>map_vals <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">min</span>(anpp<span class="sc">$</span>MAP), <span class="fu">max</span>(anpp<span class="sc">$</span>MAP), <span class="at">length.out =</span> <span class="dv">100</span>)</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(map_vals, mat_coeff<span class="sc">*</span>mat_marginal<span class="sc">^</span>mat_vals, <span class="at">type =</span> <span class="st">'l'</span>,</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">'MAP value'</span>,</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylab =</span> <span class="st">'Marginal effect of MAT|MAP'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
 </section>
 
 </main>
