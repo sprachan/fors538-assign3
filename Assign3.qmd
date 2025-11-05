@@ -1,8 +1,11 @@
 ---
 title: "Assign3"
-format: 
+execute:
+  eval: true
+format:
   html:
     toc: true
+    toc-depth: 3
 ---
 
 # Setup
@@ -31,8 +34,6 @@ AF only has 3 observations; if we include region as a factor, we should exclude 
 # EDA: variable distributions -- Q1 and 2
 
 ## Histograms
-
-> note for Noah: the #| lines at the beginning of chunks aren't R code -- they're options for Quarto in knitting and evaluating chunks. #| label: xxxx means label this chunk xxxx for organization/future reference.
 
 A histogram plotting function to avoid a ton of redundant code:
 
@@ -90,8 +91,11 @@ anpp_hist <- plot_hist(data = anpp,
 
 # Now make a figure:
 ## Overall
-mat_hist+map_hist+anpp_hist+plot_layout(axis_titles = 'collect')
-
+fig1 <- mat_hist+map_hist+anpp_hist+plot_layout(axis_titles = 'collect')+
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')&
+  theme(plot.tag = element_text(face = 'bold'),
+        axis.text = element_text(size = 8))
+fig1
 ```
 
 
@@ -104,7 +108,7 @@ plot_scatter <- function(data,
                          xvar,
                          yvar = log(ANPP),
                          pt_alpha = 0.5,
-                         smooths = TRUE,
+                         smooths = FALSE,
                          smooth_col = 'blue',
                          smooth_lty = 'dashed',
                          smooth_lty_rgn = 'solid'){
@@ -144,11 +148,14 @@ log_map_scatter <- plot_scatter(anpp, xvar = log(MAP), smooth_lty = 'solid')
 
 # Figures
 ## Overall
-map_scatter+mat_scatter+plot_layout(axis_titles = 'collect') 
+mat_scatter+map_scatter+plot_layout(axis_titles = 'collect') 
 
+## Log transformed
+fig2 <- mat_scatter+log_map_scatter+plot_layout(axis_titles = 'collect')+
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')&
+  theme(plot.tag = element_text(face = 'bold'))
 
-## Log vs untransformed
-map_scatter+log_map_scatter+plot_layout(axis_titles = 'collect')
+fig2
 
 ```
 
@@ -164,29 +171,7 @@ We can see a few things here:
 5. MAT is closer to normally distributed, but it still has a sort of weird shape.
 6. We recover a more linear relationship between log(MAP) and ANPP, but variance is still non-constant.
 
-Taking 1 and 2 together, we should use either a Gamma or Inverse Gaussian distribution as the response distribution.
-
-# Approach to modeling
-
-We want to know:
-
-1. Which distribution? Gamma or inverse gaussian?
-2. Which combination of predictors?
-  - Include interactions?
-  - Transform predictors?
- 
-Gamma vs Inverse Gaussian: 
-https://link.springer.com/chapter/10.1007/978-1-4419-0118-7_11 (found a pdf)
-- Gamma has variance related to mean^2
-- Inverse gaussian has variance related to mean^3
-- We can figure this out by plotting log(variance) against log(means) and seeing whether the slope is closer to 2 or 3.
-- Typically use inverse gaussian with really really severe skew, which I don't think we have. There's some code in the graveyard formalizing this, but Gamma is our best bet I think.
-
-Because Gamma is best bet, we can just look at (2). I think we can start with a saturated model and look at leverage. Based on that, transform predictors and see if that helps with leverage. Then start paring down the model.
-
-
-
-From the plots, we see that the residuals vs leverage plot and the scale-location plot actually look worse than the original full model.
+Taking 1 and 2 together, we should use either a Gamma or Inverse Gaussian distribution as the response distribution. We'll use Gamma because our data are not so incredibly skewed.
 
 
 # Modeling 
@@ -313,13 +298,20 @@ AIC(m1_log, m2_log, m3_log, m4_log, m1) |>
 
 These results are as expected.
 
-# Coefficients
+# Model Assessment
 
 Now that we have selected our best-fitting model, let's look at the coefficients:
 
 ```{r}
-summary(m1_log)
+m1_summ <- summary(m1_log)
+m1_summ
 ```
+We can then calculate $D^2$, analogous to $R^2$:
+
+```{r}
+d2 = 1-exp(-(m1_summ$null.deviance-m1_summ$deviance)/m1_summ$deviance)
+```
+
 Plotting partial residuals:
 
 ```{r}
@@ -327,7 +319,24 @@ par(mfrow = c(1,2))
 termplot(m1_log, data = anpp, partial.resid = TRUE)
 ```
 
-# Transforming coefficients
+Plotting hat values:
+
+```{r}
+plot(anpp$MAT, hatvalues(m1_log))
+plot(log(anpp$MAP), hatvalues(m1_log))
+```
+
+Both predictors have higher leverage points at the extremes, which is somewhat concerning.
+
+Looking at observed vs predicted values:
+
+```{r}
+preds <- predict(m1_log, data = anpp)
+plot(log(anpp$ANPP), preds)
+```
+
+
+## Transforming coefficients
 
 First, some R setup:
 ```{r}
@@ -343,7 +352,7 @@ $$
 \log(\text{ANPP}) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log(\text{MAP})+\beta_3 \text{MAT}\log(\text{MAP})
 $$
 
-## MAT coefficient
+### MAT coefficient
 
 Consider a 1-unit increase in MAT when log(MAP) is 0. Note $\beta_0 + \beta_2 \log(\text{MAP})+\beta_3 \text{MAT}\log(\text{MAP}) = \beta_0$.
 
@@ -351,12 +360,13 @@ $$
 \log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT}\\
 \log(\text{ANPP}_2) = \beta_0 + \beta_1 (\text{MAT}+1)
 $$
-
-\begin{align}
+```{=latex}
+\begin{align*}
 \implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &= \beta_1 \\
 \log(\frac{\text{ANPP}_2}{\text{ANPP}_1}) &= \beta_1 \\
 \frac{\text{ANPP}_2}{\text{ANPP}_1} &= e^{\beta_1}
-\end{align}
+\end{align*}
+```
 
 Calculating $e^{\beta_1}$:
 ```{r}
@@ -365,7 +375,7 @@ mat_coeff
 ```
 So a 1-unit increase in MAT means a 1.135x increase in ANPP, AKA a 14% increase.
 
-## MAP coefficient
+### MAP coefficient
 
 Consider a 10% increase in MAP when MAT is 0. Because MAT = 0, $\beta_0 + \beta_1 \text{MAT} +\beta_3 \text{MAT}\log(\text{MAP}) =  \beta_0$.
 
@@ -374,14 +384,15 @@ $$
 \log(\text{ANPP}_2) = \beta_0 + \beta_2\log(\text{1.1MAP})
 $$
 
-\begin{align}
-\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &= \beta_2(\log(1.1\text{MAP})-\log(\text{MAP})) \\
+```{=latex}
+\begin{align*}
+\log(\text{ANPP}_2)-\log(\text{ANPP}_1) &= \beta_2(\log(1.1\text{MAP})-\log(\text{MAP})) \\
 \log(\frac{\text{ANPP}_2}{\text{ANPP}_1}) &= \beta_2(\log(\frac{1.1\text{MAP}}{\text{MAP}})) \\
 &= \beta_2 \log(1.1)
-\end{align} 
+\end{align*} 
 
 $\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} = e^{\beta_2 \log(1.1)}$
-
+```
 
 Calculating $e^{\beta_2 \log(1.1)}$:
 ```{r}
@@ -391,11 +402,11 @@ map_coeff
 
 So a 10% increase in MAP means a 1.03x increase in ANPP, AKA a 3% increase.
 
-## Interaction
+### Interaction
 
 This one is the most involved. 
 
-### MAT constant
+#### MAT constant
 
 Let's first consider the case where MAT is held constant. In this case, we're finding the contribution of MAP conditional on a value of MAT. Then:
 
@@ -403,19 +414,21 @@ $\log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{MAP} + \
 
 $\log(\text{ANPP}_2) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{1.1MAP} + \beta_3 \text{MAT}\log(\text{1.1MAP})$
 
-\begin{align}
-\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &= \beta_2(\log(1.1\text{MAP})-\log(\text{MAP})) + \beta_3(\text{MAT}\log(\text{1.1MAP})-\text{MAT}\log(\text{MAP})) \\
+```{=latex}
+\begin{align*}
+\log(\text{ANPP}_2)-\log(\text{ANPP}_1) &= \beta_2(\log(1.1\text{MAP})-\log(\text{MAP})) + \beta_3(\text{MAT}\log(\text{1.1MAP})-\text{MAT}\log(\text{MAP})) \\
 \log(\frac{\text{ANPP}_2}{\text{ANPP}_1}) &= \beta_2 \log(1.1) + \beta_3 \text{MAT}\log(1.1) 
-\end{align}
+\end{align*}
+```
 
 
-
-\begin{align}
-\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} &= e^{\beta_2 \log(1.1) + \beta_3 \text{MAT}\log(1.1)} \\
+```{=latex}
+\begin{align*}
+\frac{\text{ANPP}_2}{\text{ANPP}_1} &= e^{\beta_2 \log(1.1) + \beta_3 \text{MAT}\log(1.1)} \\
 &= e^{\beta_2\log(1.1)}*e^{\beta_3\log(1.1)\text{MAT}} \\
 &= e^{\beta_2\log(1.1)}*\exp({\beta_3\log(1.1)})^{\text{MAT}}
-\end{align}
-
+\end{align*}
+```
 
 The first part of this is identical to the effect of a 10% increase in MAP on ANPP. Let's calculate the second part:
 
@@ -434,7 +447,7 @@ plot(mat_vals, map_coeff*map_marginal^mat_vals,
      type = 'l')
 ```
 
-### log(MAP) constant
+#### log(MAP) constant
 
 Let's now consider the other case, with log(MAP) held constant:
 
@@ -442,16 +455,20 @@ $\log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{MAP} + \
 
 $\log(\text{ANPP}_2) = \beta_0 + \beta_1 \text{MAT+1} + \beta_2 \log\text{MAP} + \beta_3 \text{(MAT+1)}\log(\text{MAP})$
 
-\begin{align}
-\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &= \beta_1(\text{MAT}+1-\text{MAT}) + \beta_3 ((\text{MAT+1})\log(\text{MAP})- \text{MAT}\log(\text{MAP})) \\
+```{=latex}
+\begin{align*}
+\log(\text{ANPP}_2)-\log(\text{ANPP}_1) &= \beta_1(\text{MAT}+1-\text{MAT}) + \beta_3 ((\text{MAT+1})\log(\text{MAP})- \text{MAT}\log(\text{MAP})) \\
 &= \beta_1 + \beta_3\log(\text{MAP}) 
-\end{align}
+\end{align*}
+```
 
-\begin{align}
-\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} &= e^{\beta_1 + \beta_3 \log\text{MAP}} \\
+```{=latex}
+\begin{align*}
+\frac{\text{ANPP}_2}{\text{ANPP}_1} &= e^{\beta_1 + \beta_3 \log\text{MAP}} \\
 &= e^{\beta_1}*e^{\beta_3\log\text{MAP}} \\
 &= e^{\beta_1} \exp(\beta_3)^\text{MAP}
-\end{align}
+\end{align*}
+```
 
 Similarly, note that the first term here is identical to the transformed coefficient for MAT. Let's calculate the second part:
 
@@ -464,7 +481,7 @@ And again, we can plot this marginal effect:
 
 ```{r}
 map_vals <- seq(min(anpp$MAP), max(anpp$MAP), length.out = 100)
-plot(map_vals, mat_coeff*mat_marginal^mat_vals, type = 'l',
+plot(map_vals, mat_coeff*mat_marginal^map_vals, type = 'l',
      xlab = 'MAP value',
      ylab = 'Marginal effect of MAT|MAP')
 ```

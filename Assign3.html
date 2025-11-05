@@ -117,7 +117,6 @@ window.Quarto = {
   <li><a href="#scatterplots" id="toc-scatterplots" class="nav-link" data-scroll-target="#scatterplots">Scatterplots</a></li>
   <li><a href="#takeaways-q3" id="toc-takeaways-q3" class="nav-link" data-scroll-target="#takeaways-q3">Takeaways (Q3)</a></li>
   </ul></li>
-  <li><a href="#approach-to-modeling" id="toc-approach-to-modeling" class="nav-link" data-scroll-target="#approach-to-modeling">Approach to modeling</a></li>
   <li><a href="#modeling" id="toc-modeling" class="nav-link" data-scroll-target="#modeling">Modeling</a>
   <ul class="collapse">
   <li><a href="#full-model" id="toc-full-model" class="nav-link" data-scroll-target="#full-model">Full Model</a>
@@ -203,9 +202,6 @@ window.Quarto = {
 <h1>EDA: variable distributions – Q1 and 2</h1>
 <section id="histograms" class="level2">
 <h2 class="anchored" data-anchor-id="histograms">Histograms</h2>
-<blockquote class="blockquote">
-<p>note for Noah: the #| lines at the beginning of chunks aren’t R code – they’re options for Quarto in knitting and evaluating chunks. #| label: xxxx means label this chunk xxxx for organization/future reference.</p>
-</blockquote>
 <p>A histogram plotting function to avoid a ton of redundant code:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># We use {{var}} so we can use dplyr-style data masking: from Hadley Wickham</span></span>
@@ -254,7 +250,11 @@ window.Quarto = {
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Now make a figure:</span></span>
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="do">## Overall</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>mat_hist<span class="sc">+</span>map_hist<span class="sc">+</span>anpp_hist<span class="sc">+</span><span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">'collect'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>fig1 <span class="ot">&lt;-</span> mat_hist<span class="sc">+</span>map_hist<span class="sc">+</span>anpp_hist<span class="sc">+</span><span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">'collect'</span>)<span class="sc">+</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">tag_levels =</span> <span class="st">'a'</span>, <span class="at">tag_prefix =</span> <span class="st">'('</span>, <span class="at">tag_suffix =</span> <span class="st">')'</span>)<span class="sc">&amp;</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.tag =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">'bold'</span>),</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">8</span>))</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>fig1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -272,7 +272,7 @@ window.Quarto = {
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                         xvar,</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                         <span class="at">yvar =</span> <span class="fu">log</span>(ANPP),</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                         <span class="at">pt_alpha =</span> <span class="fl">0.5</span>,</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                         <span class="at">smooths =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                         <span class="at">smooths =</span> <span class="cn">FALSE</span>,</span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                         <span class="at">smooth_col =</span> <span class="st">'blue'</span>,</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                         <span class="at">smooth_lty =</span> <span class="st">'dashed'</span>,</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                         <span class="at">smooth_lty_rgn =</span> <span class="st">'solid'</span>){</span>
@@ -308,7 +308,7 @@ window.Quarto = {
 <span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Figures</span></span>
 <span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="do">## Overall</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>map_scatter<span class="sc">+</span>mat_scatter<span class="sc">+</span><span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">'collect'</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>mat_scatter<span class="sc">+</span>map_scatter<span class="sc">+</span><span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">'collect'</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -316,8 +316,12 @@ window.Quarto = {
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Log vs untransformed</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>map_scatter<span class="sc">+</span>log_map_scatter<span class="sc">+</span><span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">'collect'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Log transformed</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>fig2 <span class="ot">&lt;-</span> mat_scatter<span class="sc">+</span>log_map_scatter<span class="sc">+</span><span class="fu">plot_layout</span>(<span class="at">axis_titles =</span> <span class="st">'collect'</span>)<span class="sc">+</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">tag_levels =</span> <span class="st">'a'</span>, <span class="at">tag_prefix =</span> <span class="st">'('</span>, <span class="at">tag_suffix =</span> <span class="st">')'</span>)<span class="sc">&amp;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.tag =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">'bold'</span>))</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>fig2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -338,23 +342,8 @@ window.Quarto = {
 <li>MAT is closer to normally distributed, but it still has a sort of weird shape.</li>
 <li>We recover a more linear relationship between log(MAP) and ANPP, but variance is still non-constant.</li>
 </ol>
-<p>Taking 1 and 2 together, we should use either a Gamma or Inverse Gaussian distribution as the response distribution.</p>
+<p>Taking 1 and 2 together, we should use either a Gamma or Inverse Gaussian distribution as the response distribution. We’ll use Gamma because our data are not so incredibly skewed.</p>
 </section>
-</section>
-<section id="approach-to-modeling" class="level1">
-<h1>Approach to modeling</h1>
-<p>We want to know:</p>
-<ol type="1">
-<li>Which distribution? Gamma or inverse gaussian?</li>
-<li>Which combination of predictors?</li>
-</ol>
-<ul>
-<li>Include interactions?</li>
-<li>Transform predictors?</li>
-</ul>
-<p>Gamma vs Inverse Gaussian: https://link.springer.com/chapter/10.1007/978-1-4419-0118-7_11 (found a pdf) - Gamma has variance related to mean^2 - Inverse gaussian has variance related to mean^3 - We can figure this out by plotting log(variance) against log(means) and seeing whether the slope is closer to 2 or 3. - Typically use inverse gaussian with really really severe skew, which I don’t think we have. There’s some code in the graveyard formalizing this, but Gamma is our best bet I think.</p>
-<p>Because Gamma is best bet, we can just look at (2). I think we can start with a saturated model and look at leverage. Based on that, transform predictors and see if that helps with leverage. Then start paring down the model.</p>
-<p>From the plots, we see that the residuals vs leverage plot and the scale-location plot actually look worse than the original full model.</p>
 </section>
 <section id="modeling" class="level1">
 <h1>Modeling</h1>
@@ -654,11 +643,11 @@ to involve interactions: see the help page</code></pre>
 \log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT}\\
 \log(\text{ANPP}_2) = \beta_0 + \beta_1 (\text{MAT}+1)
 \]</span></p>
-<p><span class="math display">\[\begin{align}
+<span class="math display">\[\begin{align*}
 \implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &amp;= \beta_1 \\
 \log(\frac{\text{ANPP}_2}{\text{ANPP}_1}) &amp;= \beta_1 \\
 \frac{\text{ANPP}_2}{\text{ANPP}_1} &amp;= e^{\beta_1}
-\end{align}\]</span></p>
+\end{align*}\]</span>
 <p>Calculating <span class="math inline">\(e^{\beta_1}\)</span>:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>mat_coeff <span class="ot">&lt;-</span> <span class="fu">exp</span>(b1)</span>
@@ -677,12 +666,13 @@ to involve interactions: see the help page</code></pre>
 \log(\text{ANPP}_1) = \beta_0 + \beta_2\log(\text{MAP}) \\
 \log(\text{ANPP}_2) = \beta_0 + \beta_2\log(\text{1.1MAP})
 \]</span></p>
-<p><span class="math display">\[\begin{align}
-\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &amp;= \beta_2(\log(1.1\text{MAP})-\log(\text{MAP})) \\
+<span class="math display">\[\begin{align*}
+\log(\text{ANPP}_2)-\log(\text{ANPP}_1) &amp;= \beta_2(\log(1.1\text{MAP})-\log(\text{MAP})) \\
 \log(\frac{\text{ANPP}_2}{\text{ANPP}_1}) &amp;= \beta_2(\log(\frac{1.1\text{MAP}}{\text{MAP}})) \\
 &amp;= \beta_2 \log(1.1)
-\end{align}\]</span></p>
-<p><span class="math inline">\(\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} = e^{\beta_2 \log(1.1)}\)</span></p>
+\end{align*}
+
+$\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} = e^{\beta_2 \log(1.1)}$\]</span>
 <p>Calculating <span class="math inline">\(e^{\beta_2 \log(1.1)}\)</span>:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>map_coeff <span class="ot">&lt;-</span> <span class="fu">exp</span>(b2<span class="sc">*</span><span class="fu">log</span>(<span class="fl">1.1</span>))</span>
@@ -702,15 +692,15 @@ to involve interactions: see the help page</code></pre>
 <p>Let’s first consider the case where MAT is held constant. In this case, we’re finding the contribution of MAP conditional on a value of MAT. Then:</p>
 <p><span class="math inline">\(\log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{MAP} + \beta_3 \text{MAT}\log(\text{MAP})\)</span></p>
 <p><span class="math inline">\(\log(\text{ANPP}_2) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{1.1MAP} + \beta_3 \text{MAT}\log(\text{1.1MAP})\)</span></p>
-<p><span class="math display">\[\begin{align}
-\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &amp;= \beta_2(\log(1.1\text{MAP})-\log(\text{MAP})) + \beta_3(\text{MAT}\log(\text{1.1MAP})-\text{MAT}\log(\text{MAP})) \\
+<span class="math display">\[\begin{align*}
+\log(\text{ANPP}_2)-\log(\text{ANPP}_1) &amp;= \beta_2(\log(1.1\text{MAP})-\log(\text{MAP})) + \beta_3(\text{MAT}\log(\text{1.1MAP})-\text{MAT}\log(\text{MAP})) \\
 \log(\frac{\text{ANPP}_2}{\text{ANPP}_1}) &amp;= \beta_2 \log(1.1) + \beta_3 \text{MAT}\log(1.1)
-\end{align}\]</span></p>
-<p><span class="math display">\[\begin{align}
-\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} &amp;= e^{\beta_2 \log(1.1) + \beta_3 \text{MAT}\log(1.1)} \\
+\end{align*}\]</span>
+<span class="math display">\[\begin{align*}
+\frac{\text{ANPP}_2}{\text{ANPP}_1} &amp;= e^{\beta_2 \log(1.1) + \beta_3 \text{MAT}\log(1.1)} \\
 &amp;= e^{\beta_2\log(1.1)}*e^{\beta_3\log(1.1)\text{MAT}} \\
 &amp;= e^{\beta_2\log(1.1)}*\exp({\beta_3\log(1.1)})^{\text{MAT}}
-\end{align}\]</span></p>
+\end{align*}\]</span>
 <p>The first part of this is identical to the effect of a 10% increase in MAP on ANPP. Let’s calculate the second part:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>map_marginal <span class="ot">&lt;-</span> <span class="fu">exp</span>(b3<span class="sc">*</span><span class="fu">log</span>(<span class="fl">1.1</span>))</span>
@@ -741,15 +731,15 @@ to involve interactions: see the help page</code></pre>
 <p>Let’s now consider the other case, with log(MAP) held constant:</p>
 <p><span class="math inline">\(\log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{MAP} + \beta_3 \text{MAT}\log(\text{MAP})\)</span></p>
 <p><span class="math inline">\(\log(\text{ANPP}_2) = \beta_0 + \beta_1 \text{MAT+1} + \beta_2 \log\text{MAP} + \beta_3 \text{(MAT+1)}\log(\text{MAP})\)</span></p>
-<p><span class="math display">\[\begin{align}
-\implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &amp;= \beta_1(\text{MAT}+1-\text{MAT}) + \beta_3 ((\text{MAT+1})\log(\text{MAP})- \text{MAT}\log(\text{MAP})) \\
+<span class="math display">\[\begin{align*}
+\log(\text{ANPP}_2)-\log(\text{ANPP}_1) &amp;= \beta_1(\text{MAT}+1-\text{MAT}) + \beta_3 ((\text{MAT+1})\log(\text{MAP})- \text{MAT}\log(\text{MAP})) \\
 &amp;= \beta_1 + \beta_3\log(\text{MAP})
-\end{align}\]</span></p>
-<p><span class="math display">\[\begin{align}
-\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} &amp;= e^{\beta_1 + \beta_3 \log\text{MAP}} \\
+\end{align*}\]</span>
+<span class="math display">\[\begin{align*}
+\frac{\text{ANPP}_2}{\text{ANPP}_1} &amp;= e^{\beta_1 + \beta_3 \log\text{MAP}} \\
 &amp;= e^{\beta_1}*e^{\beta_3\log\text{MAP}} \\
 &amp;= e^{\beta_1} \exp(\beta_3)^\text{MAP}
-\end{align}\]</span></p>
+\end{align*}\]</span>
 <p>Similarly, note that the first term here is identical to the transformed coefficient for MAT. Let’s calculate the second part:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>mat_marginal <span class="ot">&lt;-</span> <span class="fu">exp</span>(b3)</span>
@@ -762,7 +752,7 @@ to involve interactions: see the help page</code></pre>
 <p>And again, we can plot this marginal effect:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>map_vals <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">min</span>(anpp<span class="sc">$</span>MAP), <span class="fu">max</span>(anpp<span class="sc">$</span>MAP), <span class="at">length.out =</span> <span class="dv">100</span>)</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(map_vals, mat_coeff<span class="sc">*</span>mat_marginal<span class="sc">^</span>mat_vals, <span class="at">type =</span> <span class="st">'l'</span>,</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(map_vals, mat_coeff<span class="sc">*</span>mat_marginal<span class="sc">^</span>map_vals, <span class="at">type =</span> <span class="st">'l'</span>,</span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">'MAP value'</span>,</span>
 <span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylab =</span> <span class="st">'Marginal effect of MAT|MAP'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
