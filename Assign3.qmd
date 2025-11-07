@@ -84,6 +84,8 @@ mat_hist <- plot_hist(data = anpp,
 map_hist <- plot_hist(data = anpp,
                       var = MAP)
 
+logmap_hist <- plot_hist(data = anpp,
+                         var = log(MAP))
 
 # ANPP
 anpp_hist <- plot_hist(data = anpp,
@@ -91,11 +93,10 @@ anpp_hist <- plot_hist(data = anpp,
 
 # Now make a figure:
 ## Overall
-fig1 <- mat_hist+map_hist+anpp_hist+plot_layout(axis_titles = 'collect')+
+mat_hist+map_hist+anpp_hist+plot_layout(axis_titles = 'collect')+
   plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')&
   theme(plot.tag = element_text(face = 'bold'),
         axis.text = element_text(size = 8))
-fig1
 ```
 
 
@@ -108,7 +109,7 @@ plot_scatter <- function(data,
                          xvar,
                          yvar = log(ANPP),
                          pt_alpha = 0.5,
-                         smooths = FALSE,
+                         smooths = TRUE,
                          smooth_col = 'blue',
                          smooth_lty = 'dashed',
                          smooth_lty_rgn = 'solid'){
@@ -134,11 +135,11 @@ Using that function:
 #| label: scatterplots
 
 # MAT
-mat_scatter <- plot_scatter(anpp, xvar = MAT, smooth_lty = 'solid')
+mat_scatter <- plot_scatter(anpp, xvar = MAT, yvar = ANPP, smooth_lty = 'solid')
 
 
 # MAP
-map_scatter <- plot_scatter(anpp, xvar = MAP, smooth_lty = 'solid')
+map_scatter <- plot_scatter(anpp, xvar = MAP, yvar = ANPP, smooth_lty = 'solid')
 
 
 
@@ -151,13 +152,12 @@ log_map_scatter <- plot_scatter(anpp, xvar = log(MAP), smooth_lty = 'solid')
 mat_scatter+map_scatter+plot_layout(axis_titles = 'collect') 
 
 ## Log transformed
-fig2 <- mat_scatter+log_map_scatter+plot_layout(axis_titles = 'collect')+
+mat_scatter+log_map_scatter+plot_layout(axis_titles = 'collect')+
   plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')&
   theme(plot.tag = element_text(face = 'bold'))
 
-fig2
-
 ```
+
 
 
 ## Takeaways (Q3)
@@ -433,19 +433,10 @@ $\log(\text{ANPP}_2) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{1.1MAP} 
 The first part of this is identical to the effect of a 10% increase in MAP on ANPP. Let's calculate the second part:
 
 ```{r}
-map_marginal <- exp(b3*log(1.1))
-map_marginal
+map_base <- exp(b3*log(1.1))
+map_base
 ```
 
-We can plot this marginal:
-
-```{r}
-mat_vals <- seq(min(anpp$MAT), max(anpp$MAT), length.out = 100)
-plot(mat_vals, map_coeff*map_marginal^mat_vals,
-     xlab = 'MAT value',
-     ylab = 'Marginal effect of MAP|MAT',
-     type = 'l')
-```
 
 #### log(MAP) constant
 
@@ -473,16 +464,110 @@ $\log(\text{ANPP}_2) = \beta_0 + \beta_1 \text{MAT+1} + \beta_2 \log\text{MAP} +
 Similarly, note that the first term here is identical to the transformed coefficient for MAT. Let's calculate the second part:
 
 ```{r}
-mat_marginal <- exp(b3)
-mat_marginal
+mat_base <- exp(b3)
+mat_base
 ```
 
-And again, we can plot this marginal effect:
+### Plotting marginal effects
 
 ```{r}
+mat_vals <- seq(min(anpp$MAT), max(anpp$MAT), length.out = 100)
 map_vals <- seq(min(anpp$MAP), max(anpp$MAP), length.out = 100)
-plot(map_vals, mat_coeff*mat_marginal^map_vals, type = 'l',
-     xlab = 'MAP value',
-     ylab = 'Marginal effect of MAT|MAP')
+marg_df <- data.frame(map_vals = map_vals,
+                      mat_marginal = mat_base^map_vals,
+                      mat_vals = mat_vals,
+                      map_marginal = map_coeff*map_base^mat_vals)
+mat_marg <- ggplot(data = marg_df,
+                   aes(x = map_vals, y = mat_marginal))+
+  geom_line()+
+  labs(x = 'MAP Value', y = 'MAT|MAP')
+
+map_marg <- ggplot(data = marg_df,
+                   aes(x = mat_vals, y = map_marginal))+
+  geom_line()+
+  labs(x = 'MAT Value', y = 'MAP|MAT')
+
+mat_marg+map_marg+
+  plot_annotation(tag_levels = 'a', 
+                              tag_prefix = '(', 
+                              tag_suffix = ')')&
+  theme(plot.tag = element_text(face = 'bold'))
+```
+
+
+# Figures
+
+## Figure 1
+
+Let's construct figure 1. The left panel (a) will be the ANPP histogram. The right panels (b, c) will be the scatterplots.
+
+```{r}
+fig1 <- anpp_hist+mat_scatter/map_scatter+
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')')&
+  theme(plot.tag = element_text(face = 'bold'))
+fig1
+```
+
+## Figure 2
+
+The histograms for the predictors, side-by-side.
+```{r}
+fig2 <- mat_hist+map_hist+logmap_hist+
+  plot_layout(axes = 'collect')+
+  plot_annotation(tag_levels = 'a',
+                  tag_prefix = '(',
+                  tag_suffix = ')')&
+  theme(plot.tag = element_text(face = 'bold'))
+fig2
+```
+
+## Figure 3
+
+These will be the residuals diagnostics plots.
+
+```{r}
+rd_df <- data.frame(predicted_values = predict(m1_log, anpp),
+                    residuals = residuals(m1_log, type = 'pearson'),
+                    stand_dev_residuals = rstandard(m1_log, type = 'deviance'),
+                    stand_pear_residuals = rstandard(m1_log, type = 'pearson'),
+                    hat_values = hatvalues(m1_log))
+
+# get theoretical quantiles that match what base R uses
+rd_df$theo_quant <- abs(qnorm(ppoints(nrow(rd_df))/2))
+
+resids_fitted <- ggplot(rd_df, aes(x = predicted_values, y = residuals))+
+  geom_point(alpha = 0.5)+
+  geom_hline(aes(yintercept = 0), col = 'grey', lty = 'dashed')+
+  geom_smooth(se = FALSE, col = 'red')+
+  labs(x = 'Predicted Value',
+       y = 'Pearson\'s Residual')
+
+# Q-Q plot
+qq <- ggplot(rd_df, aes(x = sort(theo_quant), y = sort(abs(stand_dev_residuals))))+
+  geom_point(alpha = 0.5)+
+  geom_abline(aes(intercept = 0, slope = 1), col = 'grey', lty = 'dashed')+
+  labs(x = 'Theoretical Quantiles', y = '|Std. Deviance Residuals|')
+
+scale_location <- ggplot(rd_df, aes(x = predicted_values, 
+                                    y = sqrt(abs(stand_pear_residuals))))+
+  geom_point(alpha = 0.5)+
+  geom_smooth(se = FALSE, col = 'red')+
+  labs(x = 'Predicted Value',
+       y = expression(sqrt('|Std. Pearson\'s Residual|')))
+
+resid_leverage <- ggplot(rd_df, aes(x = hat_values,
+                                    y = stand_pear_residuals))+
+  geom_point(alpha = 0.5)+
+  geom_smooth(se = FALSE, col = 'red')+
+  geom_hline(aes(yintercept = 0), col = 'grey', lty = 'dashed')+
+  labs(x = 'Leverage',
+       y = 'Std. Pearson\'s Residual')
+
+fig3 <- (resids_fitted+qq)/(scale_location+resid_leverage)+
+  plot_annotation(tag_levels = 'a',
+                  tag_prefix = '(',
+                  tag_suffix = ')')&
+  theme(plot.tag = element_text(face = 'bold'))
+fig3
 ```
 
