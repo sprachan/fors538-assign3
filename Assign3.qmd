@@ -11,16 +11,19 @@ format:
 # Setup
 
 Some packages:
+
 ```{r}
 #| label: packages
 #| collapse: TRUE
 library(dplyr)
 library(ggplot2)
+library(viridis)
 library(patchwork)
 set_theme(theme_bw()) # for ggplot formatting
 ```
 
 Now the data:
+
 ```{r}
 #| label: load-data
 #| collapse: TRUE
@@ -69,7 +72,6 @@ plot_hist <- function(data,
 }
 ```
 
-
 And now let's use the code to make some histograms.
 
 ```{r}
@@ -98,7 +100,6 @@ mat_hist+map_hist+anpp_hist+plot_layout(axis_titles = 'collect')+
   theme(plot.tag = element_text(face = 'bold'),
         axis.text = element_text(size = 8))
 ```
-
 
 ## Scatterplots
 
@@ -158,28 +159,25 @@ mat_scatter+log_map_scatter+plot_layout(axis_titles = 'collect')+
 
 ```
 
-
-
 ## Takeaways (Q3)
 
 We can see a few things here:
 
-1. ANPP is positive, continuous, and skewed (from the histogram)
-2. ANPP variance is not constant with respect to MAT (from the scatterplot): higher MAT has higher variance (heteroskedacity)
-3. ANPP is not linearly related to MAP.
-4. MAP is not normally distributed; it is strictly positive and right-skewed. log(MAP) is much closer to normal.
-5. MAT is closer to normally distributed, but it still has a sort of weird shape.
-6. We recover a more linear relationship between log(MAP) and ANPP, but variance is still non-constant.
+1.  ANPP is positive, continuous, and skewed (from the histogram)
+2.  ANPP variance is not constant with respect to MAT (from the scatterplot): higher MAT has higher variance (heteroskedacity)
+3.  ANPP is not linearly related to MAP.
+4.  MAP is not normally distributed; it is strictly positive and right-skewed. log(MAP) is much closer to normal.
+5.  MAT is closer to normally distributed, but it still has a sort of weird shape.
+6.  We recover a more linear relationship between log(MAP) and ANPP, but variance is still non-constant.
 
 Taking 1 and 2 together, we should use either a Gamma or Inverse Gaussian distribution as the response distribution. We'll use Gamma because our data are not so incredibly skewed.
 
-
-# Modeling 
+# Modeling
 
 ## Full Model
 
 As always, we'll start by running a full model.
- 
+
 ### Running the model
 
 ```{r}
@@ -187,6 +185,7 @@ m1 <- glm(ANPP ~ MAT*MAP,
           family = Gamma(link = 'log'),
           data = anpp)
 ```
+
 ### Diagnostics
 
 ```{r}
@@ -217,9 +216,7 @@ hist(log(anpp$MAP))
 abline(v = log(m1_map_lev), col = 'red')
 ```
 
-
 While these points still fall on the tails, they may have less leverage now. Let's check:
-
 
 ```{r}
 #| label: full-model-log
@@ -242,7 +239,6 @@ We'll make a figure comparing the residuals vs fitted and cook's distance for bo
 ```{r}
 
 ```
-
 
 ### ANOVA
 
@@ -273,6 +269,7 @@ plot(m2_log)
 ```
 
 ## Simplified model 3 and 4
+
 This will be MAT only:
 
 ```{r}
@@ -306,6 +303,7 @@ Now that we have selected our best-fitting model, let's look at the coefficients
 m1_summ <- summary(m1_log)
 m1_summ
 ```
+
 We can then calculate $D^2$, analogous to $R^2$:
 
 ```{r}
@@ -335,10 +333,10 @@ preds <- predict(m1_log, data = anpp)
 plot(log(anpp$ANPP), preds)
 ```
 
-
 ## Transforming coefficients
 
 First, some R setup:
+
 ```{r}
 b0 <- m1_log$coefficients[1] # intercept
 b1 <- m1_log$coefficients[2] # MAT
@@ -360,6 +358,7 @@ $$
 \log(\text{ANPP}_1) = \beta_0 + \beta_1 \text{MAT}\\
 \log(\text{ANPP}_2) = \beta_0 + \beta_1 (\text{MAT}+1)
 $$
+
 ```{=latex}
 \begin{align*}
 \implies \log(\text{ANPP}_2)-\log(\text{ANPP}_1) &= \beta_1 \\
@@ -369,10 +368,12 @@ $$
 ```
 
 Calculating $e^{\beta_1}$:
+
 ```{r}
 mat_coeff <- exp(b1)
 mat_coeff
 ```
+
 So a 1-unit increase in MAT means a 1.135x increase in ANPP, AKA a 14% increase.
 
 ### MAP coefficient
@@ -395,6 +396,7 @@ $\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} = e^{\beta_2 \log(1.1)}$
 ```
 
 Calculating $e^{\beta_2 \log(1.1)}$:
+
 ```{r}
 map_coeff <- exp(b2*log(1.1))
 map_coeff
@@ -404,7 +406,7 @@ So a 10% increase in MAP means a 1.03x increase in ANPP, AKA a 3% increase.
 
 ### Interaction
 
-This one is the most involved. 
+This one is the most involved.
 
 #### MAT constant
 
@@ -421,7 +423,6 @@ $\log(\text{ANPP}_2) = \beta_0 + \beta_1 \text{MAT} + \beta_2 \log\text{1.1MAP} 
 \end{align*}
 ```
 
-
 ```{=latex}
 \begin{align*}
 \frac{\text{ANPP}_2}{\text{ANPP}_1} &= e^{\beta_2 \log(1.1) + \beta_3 \text{MAT}\log(1.1)} \\
@@ -436,7 +437,6 @@ The first part of this is identical to the effect of a 10% increase in MAP on AN
 map_base <- exp(b3*log(1.1))
 map_base
 ```
-
 
 #### log(MAP) constant
 
@@ -457,43 +457,198 @@ $\log(\text{ANPP}_2) = \beta_0 + \beta_1 \text{MAT+1} + \beta_2 \log\text{MAP} +
 \begin{align*}
 \frac{\text{ANPP}_2}{\text{ANPP}_1} &= e^{\beta_1 + \beta_3 \log\text{MAP}} \\
 &= e^{\beta_1}*e^{\beta_3\log\text{MAP}} \\
-&= e^{\beta_1} \exp(\beta_3)^\text{MAP}
+&= e^{\beta_1}*(e^{\log\text{MAP}})^{\beta_3} \\
+&= e^{\beta_1}\text{MAP}^{\beta_3}
 \end{align*}
 ```
 
-Similarly, note that the first term here is identical to the transformed coefficient for MAT. Let's calculate the second part:
-
-```{r}
-mat_base <- exp(b3)
-mat_base
-```
+Similarly, note that the first term here is identical to the transformed coefficient for MAT.
 
 ### Plotting marginal effects
 
 ```{r}
 mat_vals <- seq(min(anpp$MAT), max(anpp$MAT), length.out = 100)
 map_vals <- seq(min(anpp$MAP), max(anpp$MAP), length.out = 100)
-marg_df <- data.frame(map_vals = map_vals,
-                      mat_marginal = mat_base^map_vals,
-                      mat_vals = mat_vals,
+marg_df <- data.frame(MAP = map_vals,
+                      mat_marginal = mat_coeff*map_vals^b3,
+                      MAT = mat_vals,
                       map_marginal = map_coeff*map_base^mat_vals)
 mat_marg <- ggplot(data = marg_df,
-                   aes(x = map_vals, y = mat_marginal))+
+                   aes(x = MAP, y = 100*(mat_marginal-1)))+
   geom_line()+
-  labs(x = 'MAP Value', y = 'MAT|MAP')
+  geom_hline(aes(yintercept = 0),
+             color = 'red',
+             linetype = 'dashed')+
+  labs(x = 'MAP Value', y = '% change ANPP/increase MAT')
 
 map_marg <- ggplot(data = marg_df,
-                   aes(x = mat_vals, y = map_marginal))+
+                   aes(x = MAT, y = 100*(map_marginal-1)))+
   geom_line()+
-  labs(x = 'MAT Value', y = 'MAP|MAT')
-
-mat_marg+map_marg+
-  plot_annotation(tag_levels = 'a', 
-                              tag_prefix = '(', 
-                              tag_suffix = ')')&
-  theme(plot.tag = element_text(face = 'bold'))
+  geom_hline(aes(yintercept = 0),
+             color = 'red',
+             linetype = 'dashed')+
+  labs(x = 'MAT Value', y = '% change ANPP/ 10% increase MAP')
+mat_marg
 ```
 
+Let's now plot the surface of ANPP by MAT and MAP:
+
+```{r}
+mat_df <- marg_df |>
+  select(MAT, MAP) |>
+  tidyr::complete(MAT, MAP)
+
+mat_df$ANPP <- predict(m1_log, newdata = mat_df, type = 'response')
+
+composite <- ggplot(mat_df, aes(x = MAP, y = MAT, z = ANPP))+
+  geom_contour_filled(bins = 15)+
+  scale_fill_viridis_d()+
+  theme(panel.border = element_rect(color = NA, fill = NA),
+        legend.position = 'bottom')+
+  labs(fill = 'ANPP')
+
+composite
+```
+
+# Accuracy and Validation 
+
+## Model Validation: 10-Fold CV for best fitting model
+
+A cross-validation function:
+```{r}
+cross_valid_continuous <- function(model, data, response_col, k = 10, seed = NULL) {
+  # set the seed if requested, for repeatable results
+  if(!is.null(seed)){
+    set.seed(seed)
+  }
+  
+  # check for disagreement
+  stopifnot(response_col %in% names(data))
+
+  # assign folds
+  N <- nrow(data)
+  fold <- sample(rep(1:k), N, replace = TRUE)
+  x <- cbind(data, fold)
+  
+  # initialize storage vectors
+  ME   <- numeric(k)
+  MAE  <- numeric(k)
+  RMSE <- numeric(k)
+
+  for (i in seq_len(k)) {
+    train_data <- subset(x, fold != i)
+    valid_data <- subset(x, fold == i)
+    
+    # check that validation set is actually good
+    if (nrow(valid_data) == 0){ 
+      warning(paste('No validation data for fold', i))
+      ME[i] <- NA
+      MAE[i] <- NA
+      RMSE[i] <- NA
+    }else{
+      # Refit on training fold
+      fold_model <- update(model, data = train_data)
+  
+      # Predict on validation fold (response scale)
+      preds <- predict(fold_model, newdata = valid_data, type = "response")
+      y     <- valid_data[[response_col]]
+  
+      ME[i]   <- mean(preds - y)
+      MAE[i]  <- mean(abs(preds - y))
+      RMSE[i] <- sqrt(mean((preds - y)^2))
+    }
+  }
+
+  out <- data.frame(fold = 1:k, ME = ME, MAE = MAE, RMSE = RMSE)
+  attr(out, "summary") <- with(out, c(
+    ME_mean   = mean(ME,   na.rm = TRUE), ME_sd   = sd(ME,   na.rm = TRUE),
+    MAE_mean  = mean(MAE,  na.rm = TRUE), MAE_sd  = sd(MAE,  na.rm = TRUE),
+    RMSE_mean = mean(RMSE, na.rm = TRUE), RMSE_sd = sd(RMSE, na.rm = TRUE)
+  ))
+  return(out)
+}
+```
+
+```{r}
+# Your fitted model
+# m1_log <- glm(ANPP ~ MAT*log(MAP), family = Gamma(link = "log"), data = anpp)
+
+cv_m1 <- cross_valid_continuous(model = m1_log,
+                                data  = anpp,    
+                                response_col = "ANPP",  
+                                k = 10,
+                                seed = 1)
+
+summary(cv_m1)              # fold-by-fold summary
+attr(cv_m1, "summary")      # overall ME/MAE/RMSE means & SDs
+
+
+cv_plot <- cv_m1 |>
+           tidyr::pivot_longer(cols = c(ME, MAE, RMSE),
+                               names_to = 'metric',
+                               values_to = 'value') |> # put in ggplot friendly format
+            ggplot(aes(group = metric, x = metric, y = value))+
+            geom_boxplot(outliers = FALSE)+
+            geom_jitter(alpha = 0.5, size = 2, width = 0.05)+
+            labs(x = 'Accuracy Metric',
+                 y = 'Estimate')
+  
+
+cv_plot
+```
+## Linear regression for bias
+
+A second regression of predicted vs. observed ANPP values evaluates model bias and accuracy:
+**Intercept:** 6.63 shows our model over predicts ANPP even when ANPP=0 the model predicts about 6.6 
+**Slope:** Every 1-unit increase in observed ANPP our model prediction only increases 0.3 units 
+**R2:** Only 29.36% of the variation in ANPP is explained by MAT*log(MAP) which is not very strong
+
+This model over predicts at low ANPP and under predicts at high ANPP suggesting limited predictive ability  
+```{r}
+n <- nrow(anpp)
+samp <- sample(2,n,replace = TRUE)
+data.valid <- cbind(samp,anpp)
+data.train <- subset(anpp,samp == 1)
+data.valid <- subset(anpp,samp == 2)
+
+train.glm <- glm(ANPP ~ MAT * log(MAP),
+                family = Gamma(link = "log"),
+                data = data.train)
+
+summary(train.glm)
+# predict on held-out data
+
+pred_valid <- predict(train.glm, newdata = data.valid, type = 'response')
+
+```
+## Observed vs predicted 
+
+We now run a linear regression on predictions generated from the test set.
+```{r}
+lm.valid <- lm(pred_valid ~ data.valid$ANPP)
+summary(lm.valid)
+
+pal <- turbo(2, begin = 0.25, end = 0.75) # colorblind distinguishable colors
+
+lm_valid_plot <- ggplot(data.frame(Observed = data.valid$ANPP,
+                                   Predicted = pred_valid))+
+  geom_point(aes(x = Observed, y = Predicted), alpha = 0.5)+
+  geom_abline(slope = lm.valid$coefficients[2],
+              intercept = lm.valid$coefficients[1],
+              color = pal[1])+
+  geom_abline(slope = 1,
+              intercept = 0,
+              color = pal[2],
+              lty = 'dashed')+
+  coord_fixed()+
+  scale_x_continuous(limits = c(0, 27))+
+  scale_y_continuous(limits = c(0, 27))+
+  annotate(geom = 'text',
+           x = 5, y = 25, label = 'bold(R^2 == 0.25)', parse = TRUE)
+  
+
+lm_valid_plot
+```
 
 # Figures
 
@@ -511,6 +666,7 @@ fig1
 ## Figure 2
 
 The histograms for the predictors, side-by-side.
+
 ```{r}
 fig2 <- mat_hist+map_hist+logmap_hist+
   plot_layout(axes = 'collect')+
@@ -521,7 +677,7 @@ fig2 <- mat_hist+map_hist+logmap_hist+
 fig2
 ```
 
-## Figure 3
+## Figure 4
 
 These will be the residuals diagnostics plots.
 
@@ -563,11 +719,62 @@ resid_leverage <- ggplot(rd_df, aes(x = hat_values,
   labs(x = 'Leverage',
        y = 'Std. Pearson\'s Residual')
 
-fig3 <- (resids_fitted+qq)/(scale_location+resid_leverage)+
+fig4 <- (resids_fitted+qq)+
   plot_annotation(tag_levels = 'a',
                   tag_prefix = '(',
                   tag_suffix = ')')&
   theme(plot.tag = element_text(face = 'bold'))
+fig4
+```
+
+## Figure 3
+
+This is a plot of (a) the surface of ANPP by MAP and MAT, (b) the marginal effect of MAP on MAT and (c) the marginal effect of MAT on MAP.
+
+```{r}
+# layout <- '
+# BBBB#
+# AAAAC
+# AAAAC
+# AAAAC
+# AAAAC
+# '
+# 
+# map_rotate <- ggplot(marg_df)+
+#   geom_line(aes(x = map_marginal, y = MAT))+
+#   scale_x_continuous(n.breaks = 3)+
+#   theme(axis.text.x = element_text(angle = 270))+
+#   labs(x = 'MAP|MAT')
+
+# fig4 <- composite+scale_x_continuous(breaks = seq(1000, 7000, by = 1000))+
+#   mat_marg+scale_x_continuous(breaks = seq(1000, 7000, by = 1000))+
+#   theme(axis.title.x = element_blank(),
+#                  axis.text.x = element_blank(),
+#                  #axis.ticks.y = element_blank(),
+#                  panel.border = element_blank(),
+#                  panel.grid = element_blank(),
+#                  axis.line = element_line(color = 'darkgrey'))+
+#   map_rotate+theme(axis.title.y = element_blank(),
+#                    axis.text.y = element_blank(),
+#                    panel.border = element_blank(),
+#                    panel.grid = element_blank(),
+#                    axis.line = element_line(color = 'darkgrey'))+
+#   plot_layout(design = layout)
+
+layout <- '
+AAAB
+AAAB
+AAAC
+AAAC
+'
+fig3 <- composite + mat_marg+map_marg+
+  plot_layout(design = layout)+
+  plot_annotation(tag_levels = 'a',
+                  tag_prefix = '(',
+                  tag_suffix = ')')&
+  theme(plot.tag = element_text(face = 'bold'))
+  
+                  
 fig3
 ```
 

@@ -139,12 +139,20 @@ window.Quarto = {
   <li><a href="#mat-coefficient" id="toc-mat-coefficient" class="nav-link" data-scroll-target="#mat-coefficient">MAT coefficient</a></li>
   <li><a href="#map-coefficient" id="toc-map-coefficient" class="nav-link" data-scroll-target="#map-coefficient">MAP coefficient</a></li>
   <li><a href="#interaction" id="toc-interaction" class="nav-link" data-scroll-target="#interaction">Interaction</a></li>
+  <li><a href="#plotting-marginal-effects" id="toc-plotting-marginal-effects" class="nav-link" data-scroll-target="#plotting-marginal-effects">Plotting marginal effects</a></li>
   </ul></li>
+  </ul></li>
+  <li><a href="#accuracy-and-validation" id="toc-accuracy-and-validation" class="nav-link" data-scroll-target="#accuracy-and-validation">Accuracy and Validation</a>
+  <ul class="collapse">
+  <li><a href="#model-validation-10-fold-cv-for-best-fitting-model" id="toc-model-validation-10-fold-cv-for-best-fitting-model" class="nav-link" data-scroll-target="#model-validation-10-fold-cv-for-best-fitting-model">Model Validation: 10-Fold CV for best fitting model</a></li>
+  <li><a href="#linear-regression-for-bias" id="toc-linear-regression-for-bias" class="nav-link" data-scroll-target="#linear-regression-for-bias">Linear regression for bias</a></li>
+  <li><a href="#observed-vs-predicted" id="toc-observed-vs-predicted" class="nav-link" data-scroll-target="#observed-vs-predicted">Observed vs predicted</a></li>
   </ul></li>
   <li><a href="#figures" id="toc-figures" class="nav-link" data-scroll-target="#figures">Figures</a>
   <ul class="collapse">
   <li><a href="#figure-1" id="toc-figure-1" class="nav-link" data-scroll-target="#figure-1">Figure 1</a></li>
   <li><a href="#figure-2" id="toc-figure-2" class="nav-link" data-scroll-target="#figure-2">Figure 2</a></li>
+  <li><a href="#figure-4" id="toc-figure-4" class="nav-link" data-scroll-target="#figure-4">Figure 4</a></li>
   <li><a href="#figure-3" id="toc-figure-3" class="nav-link" data-scroll-target="#figure-3">Figure 3</a></li>
   </ul></li>
   </ul>
@@ -185,8 +193,10 @@ window.Quarto = {
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="do">## </span></span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="do">##     intersect, setdiff, setequal, union</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">set_theme</span>(<span class="fu">theme_bw</span>()) <span class="co"># for ggplot formatting</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(viridis)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="do">## Loading required package: viridisLite</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(patchwork)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">set_theme</span>(<span class="fu">theme_bw</span>()) <span class="co"># for ggplot formatting</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now the data:</p>
 <div class="cell">
@@ -742,26 +752,11 @@ $\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} = e^{\beta_2 \log(1.1)}$\]</span>
 \end{align*}\]</span>
 <p>The first part of this is identical to the effect of a 10% increase in MAP on ANPP. Let’s calculate the second part:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>map_marginal <span class="ot">&lt;-</span> <span class="fu">exp</span>(b3<span class="sc">*</span><span class="fu">log</span>(<span class="fl">1.1</span>))</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>map_marginal</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>map_base <span class="ot">&lt;-</span> <span class="fu">exp</span>(b3<span class="sc">*</span><span class="fu">log</span>(<span class="fl">1.1</span>))</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>map_base</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>MAT:log(MAP) 
    0.9986033 </code></pre>
-</div>
-</div>
-<p>We can plot this marginal:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>mat_vals <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">min</span>(anpp<span class="sc">$</span>MAT), <span class="fu">max</span>(anpp<span class="sc">$</span>MAT), <span class="at">length.out =</span> <span class="dv">100</span>)</span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(mat_vals, map_coeff<span class="sc">*</span>map_marginal<span class="sc">^</span>mat_vals,</span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">'MAT value'</span>,</span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylab =</span> <span class="st">'Marginal effect of MAP|MAT'</span>,</span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">type =</span> <span class="st">'l'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<div>
-<figure class="figure">
-<p><img src="Assign3_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
-</figure>
-</div>
 </div>
 </div>
 </section>
@@ -777,27 +772,65 @@ $\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} = e^{\beta_2 \log(1.1)}$\]</span>
 <span class="math display">\[\begin{align*}
 \frac{\text{ANPP}_2}{\text{ANPP}_1} &amp;= e^{\beta_1 + \beta_3 \log\text{MAP}} \\
 &amp;= e^{\beta_1}*e^{\beta_3\log\text{MAP}} \\
-&amp;= e^{\beta_1} \exp(\beta_3)^\text{MAP}
+&amp;= e^{\beta_1}*(e^{\log\text{MAP}})^{\beta_3} \\
+&amp;= e^{\beta_1}\text{MAP}^{\beta_3}
 \end{align*}\]</span>
-<p>Similarly, note that the first term here is identical to the transformed coefficient for MAT. Let’s calculate the second part:</p>
+<p>Similarly, note that the first term here is identical to the transformed coefficient for MAT.</p>
+</section>
+</section>
+<section id="plotting-marginal-effects" class="level3">
+<h3 class="anchored" data-anchor-id="plotting-marginal-effects">Plotting marginal effects</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>mat_marginal <span class="ot">&lt;-</span> <span class="fu">exp</span>(b3)</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>mat_marginal</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>MAT:log(MAP) 
-    0.985442 </code></pre>
-</div>
-</div>
-<p>And again, we can plot this marginal effect:</p>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>map_vals <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">min</span>(anpp<span class="sc">$</span>MAP), <span class="fu">max</span>(anpp<span class="sc">$</span>MAP), <span class="at">length.out =</span> <span class="dv">100</span>)</span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(map_vals, mat_coeff<span class="sc">*</span>mat_marginal<span class="sc">^</span>map_vals, <span class="at">type =</span> <span class="st">'l'</span>,</span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">'MAP value'</span>,</span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylab =</span> <span class="st">'Marginal effect of MAT|MAP'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>mat_vals <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">min</span>(anpp<span class="sc">$</span>MAT), <span class="fu">max</span>(anpp<span class="sc">$</span>MAT), <span class="at">length.out =</span> <span class="dv">100</span>)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>map_vals <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="fu">min</span>(anpp<span class="sc">$</span>MAP), <span class="fu">max</span>(anpp<span class="sc">$</span>MAP), <span class="at">length.out =</span> <span class="dv">100</span>)</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>marg_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">MAP =</span> map_vals,</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">mat_marginal =</span> mat_coeff<span class="sc">*</span>map_vals<span class="sc">^</span>b3,</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>                      <span class="at">MAT =</span> mat_vals,</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>                      <span class="at">map_marginal =</span> map_coeff<span class="sc">*</span>map_base<span class="sc">^</span>mat_vals)</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>mat_marg <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> marg_df,</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>                   <span class="fu">aes</span>(<span class="at">x =</span> MAP, <span class="at">y =</span> <span class="dv">100</span><span class="sc">*</span>(mat_marginal<span class="dv">-1</span>)))<span class="sc">+</span></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>()<span class="sc">+</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="fu">aes</span>(<span class="at">yintercept =</span> <span class="dv">0</span>),</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">'red'</span>,</span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>             <span class="at">linetype =</span> <span class="st">'dashed'</span>)<span class="sc">+</span></span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'MAP Value'</span>, <span class="at">y =</span> <span class="st">'% change ANPP/increase MAT'</span>)</span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>map_marg <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data =</span> marg_df,</span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a>                   <span class="fu">aes</span>(<span class="at">x =</span> MAT, <span class="at">y =</span> <span class="dv">100</span><span class="sc">*</span>(map_marginal<span class="dv">-1</span>)))<span class="sc">+</span></span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>()<span class="sc">+</span></span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="fu">aes</span>(<span class="at">yintercept =</span> <span class="dv">0</span>),</span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">'red'</span>,</span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>             <span class="at">linetype =</span> <span class="st">'dashed'</span>)<span class="sc">+</span></span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'MAT Value'</span>, <span class="at">y =</span> <span class="st">'% change ANPP/ 10% increase MAP'</span>)</span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>mat_marg</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Assign3_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Assign3_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Let’s now plot the surface of ANPP by MAT and MAP:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>mat_df <span class="ot">&lt;-</span> marg_df <span class="sc">|&gt;</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(MAT, MAP) <span class="sc">|&gt;</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  tidyr<span class="sc">::</span><span class="fu">complete</span>(MAT, MAP)</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>mat_df<span class="sc">$</span>ANPP <span class="ot">&lt;-</span> <span class="fu">predict</span>(m1_log, <span class="at">newdata =</span> mat_df, <span class="at">type =</span> <span class="st">'response'</span>)</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>composite <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(mat_df, <span class="fu">aes</span>(<span class="at">x =</span> MAP, <span class="at">y =</span> MAT, <span class="at">z =</span> ANPP))<span class="sc">+</span></span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_contour_filled</span>(<span class="at">bins =</span> <span class="dv">15</span>)<span class="sc">+</span></span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_d</span>()<span class="sc">+</span></span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.border =</span> <span class="fu">element_rect</span>(<span class="at">color =</span> <span class="cn">NA</span>, <span class="at">fill =</span> <span class="cn">NA</span>),</span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">'bottom'</span>)<span class="sc">+</span></span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">fill =</span> <span class="st">'ANPP'</span>)</span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>composite</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -805,17 +838,101 @@ $\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} = e^{\beta_2 \log(1.1)}$\]</span>
 </section>
 </section>
 </section>
-</section>
-<section id="figures" class="level1">
-<h1>Figures</h1>
-<section id="figure-1" class="level2">
-<h2 class="anchored" data-anchor-id="figure-1">Figure 1</h2>
-<p>Let’s construct figure 1. The left panel (a) will be the ANPP histogram. The right panels (b, c) will be the scatterplots.</p>
+<section id="accuracy-and-validation" class="level1">
+<h1>Accuracy and Validation</h1>
+<section id="model-validation-10-fold-cv-for-best-fitting-model" class="level2">
+<h2 class="anchored" data-anchor-id="model-validation-10-fold-cv-for-best-fitting-model">Model Validation: 10-Fold CV for best fitting model</h2>
+<p>A cross-validation function:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>fig1 <span class="ot">&lt;-</span> anpp_hist<span class="sc">+</span>mat_scatter<span class="sc">/</span>map_scatter<span class="sc">+</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">tag_levels =</span> <span class="st">'a'</span>, <span class="at">tag_prefix =</span> <span class="st">'('</span>, <span class="at">tag_suffix =</span> <span class="st">')'</span>)<span class="sc">&amp;</span></span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.tag =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">'bold'</span>))</span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>fig1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>cross_valid_continuous <span class="ot">&lt;-</span> <span class="cf">function</span>(model, data, response_col, <span class="at">k =</span> <span class="dv">10</span>, <span class="at">seed =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># set the seed if requested, for repeatable results</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="sc">!</span><span class="fu">is.null</span>(seed)){</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">set.seed</span>(seed)</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># check for disagreement</span></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(response_col <span class="sc">%in%</span> <span class="fu">names</span>(data))</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># assign folds</span></span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>  N <span class="ot">&lt;-</span> <span class="fu">nrow</span>(data)</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>  fold <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">rep</span>(<span class="dv">1</span><span class="sc">:</span>k), N, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">cbind</span>(data, fold)</span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># initialize storage vectors</span></span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>  ME   <span class="ot">&lt;-</span> <span class="fu">numeric</span>(k)</span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>  MAE  <span class="ot">&lt;-</span> <span class="fu">numeric</span>(k)</span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>  RMSE <span class="ot">&lt;-</span> <span class="fu">numeric</span>(k)</span>
+<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(k)) {</span>
+<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a>    train_data <span class="ot">&lt;-</span> <span class="fu">subset</span>(x, fold <span class="sc">!=</span> i)</span>
+<span id="cb41-22"><a href="#cb41-22" aria-hidden="true" tabindex="-1"></a>    valid_data <span class="ot">&lt;-</span> <span class="fu">subset</span>(x, fold <span class="sc">==</span> i)</span>
+<span id="cb41-23"><a href="#cb41-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb41-24"><a href="#cb41-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># check that validation set is actually good</span></span>
+<span id="cb41-25"><a href="#cb41-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">nrow</span>(valid_data) <span class="sc">==</span> <span class="dv">0</span>){ </span>
+<span id="cb41-26"><a href="#cb41-26" aria-hidden="true" tabindex="-1"></a>      <span class="fu">warning</span>(<span class="fu">paste</span>(<span class="st">'No validation data for fold'</span>, i))</span>
+<span id="cb41-27"><a href="#cb41-27" aria-hidden="true" tabindex="-1"></a>      ME[i] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb41-28"><a href="#cb41-28" aria-hidden="true" tabindex="-1"></a>      MAE[i] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb41-29"><a href="#cb41-29" aria-hidden="true" tabindex="-1"></a>      RMSE[i] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb41-30"><a href="#cb41-30" aria-hidden="true" tabindex="-1"></a>    }<span class="cf">else</span>{</span>
+<span id="cb41-31"><a href="#cb41-31" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Refit on training fold</span></span>
+<span id="cb41-32"><a href="#cb41-32" aria-hidden="true" tabindex="-1"></a>      fold_model <span class="ot">&lt;-</span> <span class="fu">update</span>(model, <span class="at">data =</span> train_data)</span>
+<span id="cb41-33"><a href="#cb41-33" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb41-34"><a href="#cb41-34" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Predict on validation fold (response scale)</span></span>
+<span id="cb41-35"><a href="#cb41-35" aria-hidden="true" tabindex="-1"></a>      preds <span class="ot">&lt;-</span> <span class="fu">predict</span>(fold_model, <span class="at">newdata =</span> valid_data, <span class="at">type =</span> <span class="st">"response"</span>)</span>
+<span id="cb41-36"><a href="#cb41-36" aria-hidden="true" tabindex="-1"></a>      y     <span class="ot">&lt;-</span> valid_data[[response_col]]</span>
+<span id="cb41-37"><a href="#cb41-37" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb41-38"><a href="#cb41-38" aria-hidden="true" tabindex="-1"></a>      ME[i]   <span class="ot">&lt;-</span> <span class="fu">mean</span>(preds <span class="sc">-</span> y)</span>
+<span id="cb41-39"><a href="#cb41-39" aria-hidden="true" tabindex="-1"></a>      MAE[i]  <span class="ot">&lt;-</span> <span class="fu">mean</span>(<span class="fu">abs</span>(preds <span class="sc">-</span> y))</span>
+<span id="cb41-40"><a href="#cb41-40" aria-hidden="true" tabindex="-1"></a>      RMSE[i] <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">mean</span>((preds <span class="sc">-</span> y)<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb41-41"><a href="#cb41-41" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb41-42"><a href="#cb41-42" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb41-43"><a href="#cb41-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-44"><a href="#cb41-44" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">fold =</span> <span class="dv">1</span><span class="sc">:</span>k, <span class="at">ME =</span> ME, <span class="at">MAE =</span> MAE, <span class="at">RMSE =</span> RMSE)</span>
+<span id="cb41-45"><a href="#cb41-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">attr</span>(out, <span class="st">"summary"</span>) <span class="ot">&lt;-</span> <span class="fu">with</span>(out, <span class="fu">c</span>(</span>
+<span id="cb41-46"><a href="#cb41-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">ME_mean   =</span> <span class="fu">mean</span>(ME,   <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">ME_sd   =</span> <span class="fu">sd</span>(ME,   <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb41-47"><a href="#cb41-47" aria-hidden="true" tabindex="-1"></a>    <span class="at">MAE_mean  =</span> <span class="fu">mean</span>(MAE,  <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">MAE_sd  =</span> <span class="fu">sd</span>(MAE,  <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb41-48"><a href="#cb41-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">RMSE_mean =</span> <span class="fu">mean</span>(RMSE, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">RMSE_sd =</span> <span class="fu">sd</span>(RMSE, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb41-49"><a href="#cb41-49" aria-hidden="true" tabindex="-1"></a>  ))</span>
+<span id="cb41-50"><a href="#cb41-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(out)</span>
+<span id="cb41-51"><a href="#cb41-51" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your fitted model</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="co"># m1_log &lt;- glm(ANPP ~ MAT*log(MAP), family = Gamma(link = "log"), data = anpp)</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>cv_m1 <span class="ot">&lt;-</span> <span class="fu">cross_valid_continuous</span>(<span class="at">model =</span> m1_log,</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>                                <span class="at">data  =</span> anpp,    </span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>                                <span class="at">response_col =</span> <span class="st">"ANPP"</span>,  </span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>                                <span class="at">k =</span> <span class="dv">10</span>,</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>                                <span class="at">seed =</span> <span class="dv">1</span>)</span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(cv_m1)              <span class="co"># fold-by-fold summary</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>      fold             ME                MAE             RMSE      
+ Min.   : 1.00   Min.   :-1.22747   Min.   :2.436   Min.   :3.275  
+ 1st Qu.: 3.25   1st Qu.:-0.48187   1st Qu.:3.005   1st Qu.:3.820  
+ Median : 5.50   Median :-0.07466   Median :3.173   Median :4.195  
+ Mean   : 5.50   Mean   : 0.06731   Mean   :3.161   Mean   :4.167  
+ 3rd Qu.: 7.75   3rd Qu.: 0.65507   3rd Qu.:3.393   3rd Qu.:4.435  
+ Max.   :10.00   Max.   : 1.59316   Max.   :3.632   Max.   :4.914  </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">attr</span>(cv_m1, <span class="st">"summary"</span>)      <span class="co"># overall ME/MAE/RMSE means &amp; SDs</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   ME_mean      ME_sd   MAE_mean     MAE_sd  RMSE_mean    RMSE_sd 
+0.06730669 0.83742048 3.16053130 0.34805916 4.16729243 0.51455672 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>cv_plot <span class="ot">&lt;-</span> cv_m1 <span class="sc">|&gt;</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>           tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(ME, MAE, RMSE),</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>                               <span class="at">names_to =</span> <span class="st">'metric'</span>,</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>                               <span class="at">values_to =</span> <span class="st">'value'</span>) <span class="sc">|&gt;</span> <span class="co"># put in ggplot friendly format</span></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>            <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">group =</span> metric, <span class="at">x =</span> metric, <span class="at">y =</span> value))<span class="sc">+</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>            <span class="fu">geom_boxplot</span>(<span class="at">outliers =</span> <span class="cn">FALSE</span>)<span class="sc">+</span></span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>            <span class="fu">geom_jitter</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">size =</span> <span class="dv">2</span>, <span class="at">width =</span> <span class="fl">0.05</span>)<span class="sc">+</span></span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>            <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'Accuracy Metric'</span>,</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>                 <span class="at">y =</span> <span class="st">'Estimate'</span>)</span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>cv_plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -825,21 +942,203 @@ $\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} = e^{\beta_2 \log(1.1)}$\]</span>
 </div>
 </div>
 </section>
+<section id="linear-regression-for-bias" class="level2">
+<h2 class="anchored" data-anchor-id="linear-regression-for-bias">Linear regression for bias</h2>
+<p>A second regression of predicted vs.&nbsp;observed ANPP values evaluates model bias and accuracy: <strong>Intercept:</strong> 6.63 shows our model over predicts ANPP even when ANPP=0 the model predicts about 6.6 <strong>Slope:</strong> Every 1-unit increase in observed ANPP our model prediction only increases 0.3 units <strong>R2:</strong> Only 29.36% of the variation in ANPP is explained by MAT*log(MAP) which is not very strong</p>
+<p>This model over predicts at low ANPP and under predicts at high ANPP suggesting limited predictive ability</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(anpp)</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>samp <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">2</span>,n,<span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>data.valid <span class="ot">&lt;-</span> <span class="fu">cbind</span>(samp,anpp)</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>data.train <span class="ot">&lt;-</span> <span class="fu">subset</span>(anpp,samp <span class="sc">==</span> <span class="dv">1</span>)</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>data.valid <span class="ot">&lt;-</span> <span class="fu">subset</span>(anpp,samp <span class="sc">==</span> <span class="dv">2</span>)</span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>train.glm <span class="ot">&lt;-</span> <span class="fu">glm</span>(ANPP <span class="sc">~</span> MAT <span class="sc">*</span> <span class="fu">log</span>(MAP),</span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>                <span class="at">family =</span> <span class="fu">Gamma</span>(<span class="at">link =</span> <span class="st">"log"</span>),</span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>                <span class="at">data =</span> data.train)</span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(train.glm)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = ANPP ~ MAT * log(MAP), family = Gamma(link = "log"), 
+    data = data.train)
+
+Coefficients:
+              Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)  -0.572408   0.579068  -0.988  0.32395    
+MAT           0.096774   0.032387   2.988  0.00311 ** 
+log(MAP)      0.375141   0.088202   4.253 3.07e-05 ***
+MAT:log(MAP) -0.011376   0.004626  -2.459  0.01466 *  
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for Gamma family taken to be 0.1782844)
+
+    Null deviance: 65.599  on 232  degrees of freedom
+Residual deviance: 46.777  on 229  degrees of freedom
+AIC: 1294.5
+
+Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># predict on held-out data</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>pred_valid <span class="ot">&lt;-</span> <span class="fu">predict</span>(train.glm, <span class="at">newdata =</span> data.valid, <span class="at">type =</span> <span class="st">'response'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="observed-vs-predicted" class="level2">
+<h2 class="anchored" data-anchor-id="observed-vs-predicted">Observed vs predicted</h2>
+<p>We now run a linear regression on predictions generated from the test set.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>lm.valid <span class="ot">&lt;-</span> <span class="fu">lm</span>(pred_valid <span class="sc">~</span> data.valid<span class="sc">$</span>ANPP)</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lm.valid)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = pred_valid ~ data.valid$ANPP)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-4.7914 -1.9353 -0.1276  1.8478  6.1102 
+
+Coefficients:
+                Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept)      6.81552    0.32151  21.199   &lt;2e-16 ***
+data.valid$ANPP  0.28008    0.03075   9.108   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 2.366 on 252 degrees of freedom
+Multiple R-squared:  0.2477,    Adjusted R-squared:  0.2447 
+F-statistic: 82.95 on 1 and 252 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>pal <span class="ot">&lt;-</span> <span class="fu">turbo</span>(<span class="dv">2</span>, <span class="at">begin =</span> <span class="fl">0.25</span>, <span class="at">end =</span> <span class="fl">0.75</span>) <span class="co"># colorblind distinguishable colors</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>lm_valid_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="fu">data.frame</span>(<span class="at">Observed =</span> data.valid<span class="sc">$</span>ANPP,</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">Predicted =</span> pred_valid))<span class="sc">+</span></span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">x =</span> Observed, <span class="at">y =</span> Predicted), <span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">slope =</span> lm.valid<span class="sc">$</span>coefficients[<span class="dv">2</span>],</span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">intercept =</span> lm.valid<span class="sc">$</span>coefficients[<span class="dv">1</span>],</span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">color =</span> pal[<span class="dv">1</span>])<span class="sc">+</span></span>
+<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">slope =</span> <span class="dv">1</span>,</span>
+<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a>              <span class="at">intercept =</span> <span class="dv">0</span>,</span>
+<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a>              <span class="at">color =</span> pal[<span class="dv">2</span>],</span>
+<span id="cb52-12"><a href="#cb52-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">lty =</span> <span class="st">'dashed'</span>)<span class="sc">+</span></span>
+<span id="cb52-13"><a href="#cb52-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_fixed</span>()<span class="sc">+</span></span>
+<span id="cb52-14"><a href="#cb52-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">27</span>))<span class="sc">+</span></span>
+<span id="cb52-15"><a href="#cb52-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(<span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">27</span>))<span class="sc">+</span></span>
+<span id="cb52-16"><a href="#cb52-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="at">geom =</span> <span class="st">'text'</span>,</span>
+<span id="cb52-17"><a href="#cb52-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">x =</span> <span class="dv">5</span>, <span class="at">y =</span> <span class="dv">25</span>, <span class="at">label =</span> <span class="st">'bold(R^2 == 0.25)'</span>, <span class="at">parse =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb52-18"><a href="#cb52-18" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb52-19"><a href="#cb52-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-20"><a href="#cb52-20" aria-hidden="true" tabindex="-1"></a>lm_valid_plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 1 row containing missing values or values outside the scale range
+(`geom_point()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="figures" class="level1">
+<h1>Figures</h1>
+<section id="figure-1" class="level2">
+<h2 class="anchored" data-anchor-id="figure-1">Figure 1</h2>
+<p>Let’s construct figure 1. The left panel (a) will be the ANPP histogram. The right panels (b, c) will be the scatterplots.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>fig1 <span class="ot">&lt;-</span> anpp_hist<span class="sc">+</span>mat_scatter<span class="sc">/</span>map_scatter<span class="sc">+</span></span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">tag_levels =</span> <span class="st">'a'</span>, <span class="at">tag_prefix =</span> <span class="st">'('</span>, <span class="at">tag_suffix =</span> <span class="st">')'</span>)<span class="sc">&amp;</span></span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.tag =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">'bold'</span>))</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a>fig1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
 <section id="figure-2" class="level2">
 <h2 class="anchored" data-anchor-id="figure-2">Figure 2</h2>
 <p>The histograms for the predictors, side-by-side.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>fig2 <span class="ot">&lt;-</span> mat_hist<span class="sc">+</span>map_hist<span class="sc">+</span>logmap_hist<span class="sc">+</span></span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_layout</span>(<span class="at">axes =</span> <span class="st">'collect'</span>)<span class="sc">+</span></span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">tag_levels =</span> <span class="st">'a'</span>,</span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">tag_prefix =</span> <span class="st">'('</span>,</span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">tag_suffix =</span> <span class="st">')'</span>)<span class="sc">&amp;</span></span>
-<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.tag =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">'bold'</span>))</span>
-<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>fig2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>fig2 <span class="ot">&lt;-</span> mat_hist<span class="sc">+</span>map_hist<span class="sc">+</span>logmap_hist<span class="sc">+</span></span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_layout</span>(<span class="at">axes =</span> <span class="st">'collect'</span>)<span class="sc">+</span></span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">tag_levels =</span> <span class="st">'a'</span>,</span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>                  <span class="at">tag_prefix =</span> <span class="st">'('</span>,</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>                  <span class="at">tag_suffix =</span> <span class="st">')'</span>)<span class="sc">&amp;</span></span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.tag =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">'bold'</span>))</span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a>fig2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Assign3_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Assign3_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="figure-4" class="level2">
+<h2 class="anchored" data-anchor-id="figure-4">Figure 4</h2>
+<p>These will be the residuals diagnostics plots.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>rd_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">predicted_values =</span> <span class="fu">predict</span>(m1_log, anpp),</span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">residuals =</span> <span class="fu">residuals</span>(m1_log, <span class="at">type =</span> <span class="st">'pearson'</span>),</span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">stand_dev_residuals =</span> <span class="fu">rstandard</span>(m1_log, <span class="at">type =</span> <span class="st">'deviance'</span>),</span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">stand_pear_residuals =</span> <span class="fu">rstandard</span>(m1_log, <span class="at">type =</span> <span class="st">'pearson'</span>),</span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">hat_values =</span> <span class="fu">hatvalues</span>(m1_log))</span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a><span class="co"># get theoretical quantiles that match what base R uses</span></span>
+<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>rd_df<span class="sc">$</span>theo_quant <span class="ot">&lt;-</span> <span class="fu">abs</span>(<span class="fu">qnorm</span>(<span class="fu">ppoints</span>(<span class="fu">nrow</span>(rd_df))<span class="sc">/</span><span class="dv">2</span>))</span>
+<span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-10"><a href="#cb56-10" aria-hidden="true" tabindex="-1"></a>resids_fitted <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(rd_df, <span class="fu">aes</span>(<span class="at">x =</span> predicted_values, <span class="at">y =</span> residuals))<span class="sc">+</span></span>
+<span id="cb56-11"><a href="#cb56-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
+<span id="cb56-12"><a href="#cb56-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="fu">aes</span>(<span class="at">yintercept =</span> <span class="dv">0</span>), <span class="at">col =</span> <span class="st">'grey'</span>, <span class="at">lty =</span> <span class="st">'dashed'</span>)<span class="sc">+</span></span>
+<span id="cb56-13"><a href="#cb56-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">col =</span> <span class="st">'red'</span>)<span class="sc">+</span></span>
+<span id="cb56-14"><a href="#cb56-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'Predicted Value'</span>,</span>
+<span id="cb56-15"><a href="#cb56-15" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">'Pearson</span><span class="sc">\'</span><span class="st">s Residual'</span>)</span>
+<span id="cb56-16"><a href="#cb56-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-17"><a href="#cb56-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Q-Q plot</span></span>
+<span id="cb56-18"><a href="#cb56-18" aria-hidden="true" tabindex="-1"></a>qq <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(rd_df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">sort</span>(theo_quant), <span class="at">y =</span> <span class="fu">sort</span>(<span class="fu">abs</span>(stand_dev_residuals))))<span class="sc">+</span></span>
+<span id="cb56-19"><a href="#cb56-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
+<span id="cb56-20"><a href="#cb56-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="fu">aes</span>(<span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">slope =</span> <span class="dv">1</span>), <span class="at">col =</span> <span class="st">'grey'</span>, <span class="at">lty =</span> <span class="st">'dashed'</span>)<span class="sc">+</span></span>
+<span id="cb56-21"><a href="#cb56-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'Theoretical Quantiles'</span>, <span class="at">y =</span> <span class="st">'|Std. Deviance Residuals|'</span>)</span>
+<span id="cb56-22"><a href="#cb56-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-23"><a href="#cb56-23" aria-hidden="true" tabindex="-1"></a>scale_location <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(rd_df, <span class="fu">aes</span>(<span class="at">x =</span> predicted_values, </span>
+<span id="cb56-24"><a href="#cb56-24" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">y =</span> <span class="fu">sqrt</span>(<span class="fu">abs</span>(stand_pear_residuals))))<span class="sc">+</span></span>
+<span id="cb56-25"><a href="#cb56-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
+<span id="cb56-26"><a href="#cb56-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">col =</span> <span class="st">'red'</span>)<span class="sc">+</span></span>
+<span id="cb56-27"><a href="#cb56-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'Predicted Value'</span>,</span>
+<span id="cb56-28"><a href="#cb56-28" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="fu">expression</span>(<span class="fu">sqrt</span>(<span class="st">'|Std. Pearson</span><span class="sc">\'</span><span class="st">s Residual|'</span>)))</span>
+<span id="cb56-29"><a href="#cb56-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-30"><a href="#cb56-30" aria-hidden="true" tabindex="-1"></a>resid_leverage <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(rd_df, <span class="fu">aes</span>(<span class="at">x =</span> hat_values,</span>
+<span id="cb56-31"><a href="#cb56-31" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">y =</span> stand_pear_residuals))<span class="sc">+</span></span>
+<span id="cb56-32"><a href="#cb56-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
+<span id="cb56-33"><a href="#cb56-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">col =</span> <span class="st">'red'</span>)<span class="sc">+</span></span>
+<span id="cb56-34"><a href="#cb56-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="fu">aes</span>(<span class="at">yintercept =</span> <span class="dv">0</span>), <span class="at">col =</span> <span class="st">'grey'</span>, <span class="at">lty =</span> <span class="st">'dashed'</span>)<span class="sc">+</span></span>
+<span id="cb56-35"><a href="#cb56-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'Leverage'</span>,</span>
+<span id="cb56-36"><a href="#cb56-36" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">'Std. Pearson</span><span class="sc">\'</span><span class="st">s Residual'</span>)</span>
+<span id="cb56-37"><a href="#cb56-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-38"><a href="#cb56-38" aria-hidden="true" tabindex="-1"></a>fig4 <span class="ot">&lt;-</span> (resids_fitted<span class="sc">+</span>qq)<span class="sc">+</span></span>
+<span id="cb56-39"><a href="#cb56-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">tag_levels =</span> <span class="st">'a'</span>,</span>
+<span id="cb56-40"><a href="#cb56-40" aria-hidden="true" tabindex="-1"></a>                  <span class="at">tag_prefix =</span> <span class="st">'('</span>,</span>
+<span id="cb56-41"><a href="#cb56-41" aria-hidden="true" tabindex="-1"></a>                  <span class="at">tag_suffix =</span> <span class="st">')'</span>)<span class="sc">&amp;</span></span>
+<span id="cb56-42"><a href="#cb56-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.tag =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">'bold'</span>))</span>
+<span id="cb56-43"><a href="#cb56-43" aria-hidden="true" tabindex="-1"></a>fig4</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using method = 'loess' and formula = 'y ~ x'</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="Assign3_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -847,60 +1146,56 @@ $\implies \frac{\text{ANPP}_2}{\text{ANPP}_1} = e^{\beta_2 \log(1.1)}$\]</span>
 </section>
 <section id="figure-3" class="level2">
 <h2 class="anchored" data-anchor-id="figure-3">Figure 3</h2>
-<p>These will be the residuals diagnostics plots.</p>
+<p>This is a plot of (a) the surface of ANPP by MAP and MAT, (b) the marginal effect of MAP on MAT and (c) the marginal effect of MAT on MAP.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>rd_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">predicted_values =</span> <span class="fu">predict</span>(m1_log, anpp),</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">residuals =</span> <span class="fu">residuals</span>(m1_log, <span class="at">type =</span> <span class="st">'pearson'</span>),</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>                    <span class="at">stand_dev_residuals =</span> <span class="fu">rstandard</span>(m1_log, <span class="at">type =</span> <span class="st">'deviance'</span>),</span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">stand_pear_residuals =</span> <span class="fu">rstandard</span>(m1_log, <span class="at">type =</span> <span class="st">'pearson'</span>),</span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">hat_values =</span> <span class="fu">hatvalues</span>(m1_log))</span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a><span class="co"># get theoretical quantiles that match what base R uses</span></span>
-<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>rd_df<span class="sc">$</span>theo_quant <span class="ot">&lt;-</span> <span class="fu">abs</span>(<span class="fu">qnorm</span>(<span class="fu">ppoints</span>(<span class="fu">nrow</span>(rd_df))<span class="sc">/</span><span class="dv">2</span>))</span>
-<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>resids_fitted <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(rd_df, <span class="fu">aes</span>(<span class="at">x =</span> predicted_values, <span class="at">y =</span> residuals))<span class="sc">+</span></span>
-<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
-<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="fu">aes</span>(<span class="at">yintercept =</span> <span class="dv">0</span>), <span class="at">col =</span> <span class="st">'grey'</span>, <span class="at">lty =</span> <span class="st">'dashed'</span>)<span class="sc">+</span></span>
-<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">col =</span> <span class="st">'red'</span>)<span class="sc">+</span></span>
-<span id="cb45-14"><a href="#cb45-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'Predicted Value'</span>,</span>
-<span id="cb45-15"><a href="#cb45-15" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">'Pearson</span><span class="sc">\'</span><span class="st">s Residual'</span>)</span>
-<span id="cb45-16"><a href="#cb45-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-17"><a href="#cb45-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Q-Q plot</span></span>
-<span id="cb45-18"><a href="#cb45-18" aria-hidden="true" tabindex="-1"></a>qq <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(rd_df, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">sort</span>(theo_quant), <span class="at">y =</span> <span class="fu">sort</span>(<span class="fu">abs</span>(stand_dev_residuals))))<span class="sc">+</span></span>
-<span id="cb45-19"><a href="#cb45-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
-<span id="cb45-20"><a href="#cb45-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="fu">aes</span>(<span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">slope =</span> <span class="dv">1</span>), <span class="at">col =</span> <span class="st">'grey'</span>, <span class="at">lty =</span> <span class="st">'dashed'</span>)<span class="sc">+</span></span>
-<span id="cb45-21"><a href="#cb45-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'Theoretical Quantiles'</span>, <span class="at">y =</span> <span class="st">'|Std. Deviance Residuals|'</span>)</span>
-<span id="cb45-22"><a href="#cb45-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-23"><a href="#cb45-23" aria-hidden="true" tabindex="-1"></a>scale_location <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(rd_df, <span class="fu">aes</span>(<span class="at">x =</span> predicted_values, </span>
-<span id="cb45-24"><a href="#cb45-24" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">y =</span> <span class="fu">sqrt</span>(<span class="fu">abs</span>(stand_pear_residuals))))<span class="sc">+</span></span>
-<span id="cb45-25"><a href="#cb45-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
-<span id="cb45-26"><a href="#cb45-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">col =</span> <span class="st">'red'</span>)<span class="sc">+</span></span>
-<span id="cb45-27"><a href="#cb45-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'Predicted Value'</span>,</span>
-<span id="cb45-28"><a href="#cb45-28" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="fu">expression</span>(<span class="fu">sqrt</span>(<span class="st">'|Std. Pearson</span><span class="sc">\'</span><span class="st">s Residual|'</span>)))</span>
-<span id="cb45-29"><a href="#cb45-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-30"><a href="#cb45-30" aria-hidden="true" tabindex="-1"></a>resid_leverage <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(rd_df, <span class="fu">aes</span>(<span class="at">x =</span> hat_values,</span>
-<span id="cb45-31"><a href="#cb45-31" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">y =</span> stand_pear_residuals))<span class="sc">+</span></span>
-<span id="cb45-32"><a href="#cb45-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">alpha =</span> <span class="fl">0.5</span>)<span class="sc">+</span></span>
-<span id="cb45-33"><a href="#cb45-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="at">se =</span> <span class="cn">FALSE</span>, <span class="at">col =</span> <span class="st">'red'</span>)<span class="sc">+</span></span>
-<span id="cb45-34"><a href="#cb45-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="fu">aes</span>(<span class="at">yintercept =</span> <span class="dv">0</span>), <span class="at">col =</span> <span class="st">'grey'</span>, <span class="at">lty =</span> <span class="st">'dashed'</span>)<span class="sc">+</span></span>
-<span id="cb45-35"><a href="#cb45-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">'Leverage'</span>,</span>
-<span id="cb45-36"><a href="#cb45-36" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">'Std. Pearson</span><span class="sc">\'</span><span class="st">s Residual'</span>)</span>
-<span id="cb45-37"><a href="#cb45-37" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-38"><a href="#cb45-38" aria-hidden="true" tabindex="-1"></a>fig3 <span class="ot">&lt;-</span> (resids_fitted<span class="sc">+</span>qq)<span class="sc">/</span>(scale_location<span class="sc">+</span>resid_leverage)<span class="sc">+</span></span>
-<span id="cb45-39"><a href="#cb45-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">tag_levels =</span> <span class="st">'a'</span>,</span>
-<span id="cb45-40"><a href="#cb45-40" aria-hidden="true" tabindex="-1"></a>                  <span class="at">tag_prefix =</span> <span class="st">'('</span>,</span>
-<span id="cb45-41"><a href="#cb45-41" aria-hidden="true" tabindex="-1"></a>                  <span class="at">tag_suffix =</span> <span class="st">')'</span>)<span class="sc">&amp;</span></span>
-<span id="cb45-42"><a href="#cb45-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.tag =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">'bold'</span>))</span>
-<span id="cb45-43"><a href="#cb45-43" aria-hidden="true" tabindex="-1"></a>fig3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>`geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-`geom_smooth()` using method = 'loess' and formula = 'y ~ x'
-`geom_smooth()` using method = 'loess' and formula = 'y ~ x'</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="co"># layout &lt;- '</span></span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a><span class="co"># BBBB#</span></span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a><span class="co"># AAAAC</span></span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a><span class="co"># AAAAC</span></span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a><span class="co"># AAAAC</span></span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a><span class="co"># AAAAC</span></span>
+<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a><span class="co"># '</span></span>
+<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a><span class="co"># map_rotate &lt;- ggplot(marg_df)+</span></span>
+<span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a><span class="co">#   geom_line(aes(x = map_marginal, y = MAT))+</span></span>
+<span id="cb58-11"><a href="#cb58-11" aria-hidden="true" tabindex="-1"></a><span class="co">#   scale_x_continuous(n.breaks = 3)+</span></span>
+<span id="cb58-12"><a href="#cb58-12" aria-hidden="true" tabindex="-1"></a><span class="co">#   theme(axis.text.x = element_text(angle = 270))+</span></span>
+<span id="cb58-13"><a href="#cb58-13" aria-hidden="true" tabindex="-1"></a><span class="co">#   labs(x = 'MAP|MAT')</span></span>
+<span id="cb58-14"><a href="#cb58-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-15"><a href="#cb58-15" aria-hidden="true" tabindex="-1"></a><span class="co"># fig4 &lt;- composite+scale_x_continuous(breaks = seq(1000, 7000, by = 1000))+</span></span>
+<span id="cb58-16"><a href="#cb58-16" aria-hidden="true" tabindex="-1"></a><span class="co">#   mat_marg+scale_x_continuous(breaks = seq(1000, 7000, by = 1000))+</span></span>
+<span id="cb58-17"><a href="#cb58-17" aria-hidden="true" tabindex="-1"></a><span class="co">#   theme(axis.title.x = element_blank(),</span></span>
+<span id="cb58-18"><a href="#cb58-18" aria-hidden="true" tabindex="-1"></a><span class="co">#                  axis.text.x = element_blank(),</span></span>
+<span id="cb58-19"><a href="#cb58-19" aria-hidden="true" tabindex="-1"></a><span class="co">#                  #axis.ticks.y = element_blank(),</span></span>
+<span id="cb58-20"><a href="#cb58-20" aria-hidden="true" tabindex="-1"></a><span class="co">#                  panel.border = element_blank(),</span></span>
+<span id="cb58-21"><a href="#cb58-21" aria-hidden="true" tabindex="-1"></a><span class="co">#                  panel.grid = element_blank(),</span></span>
+<span id="cb58-22"><a href="#cb58-22" aria-hidden="true" tabindex="-1"></a><span class="co">#                  axis.line = element_line(color = 'darkgrey'))+</span></span>
+<span id="cb58-23"><a href="#cb58-23" aria-hidden="true" tabindex="-1"></a><span class="co">#   map_rotate+theme(axis.title.y = element_blank(),</span></span>
+<span id="cb58-24"><a href="#cb58-24" aria-hidden="true" tabindex="-1"></a><span class="co">#                    axis.text.y = element_blank(),</span></span>
+<span id="cb58-25"><a href="#cb58-25" aria-hidden="true" tabindex="-1"></a><span class="co">#                    panel.border = element_blank(),</span></span>
+<span id="cb58-26"><a href="#cb58-26" aria-hidden="true" tabindex="-1"></a><span class="co">#                    panel.grid = element_blank(),</span></span>
+<span id="cb58-27"><a href="#cb58-27" aria-hidden="true" tabindex="-1"></a><span class="co">#                    axis.line = element_line(color = 'darkgrey'))+</span></span>
+<span id="cb58-28"><a href="#cb58-28" aria-hidden="true" tabindex="-1"></a><span class="co">#   plot_layout(design = layout)</span></span>
+<span id="cb58-29"><a href="#cb58-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-30"><a href="#cb58-30" aria-hidden="true" tabindex="-1"></a>layout <span class="ot">&lt;-</span> <span class="st">'</span></span>
+<span id="cb58-31"><a href="#cb58-31" aria-hidden="true" tabindex="-1"></a><span class="st">AAAB</span></span>
+<span id="cb58-32"><a href="#cb58-32" aria-hidden="true" tabindex="-1"></a><span class="st">AAAB</span></span>
+<span id="cb58-33"><a href="#cb58-33" aria-hidden="true" tabindex="-1"></a><span class="st">AAAC</span></span>
+<span id="cb58-34"><a href="#cb58-34" aria-hidden="true" tabindex="-1"></a><span class="st">AAAC</span></span>
+<span id="cb58-35"><a href="#cb58-35" aria-hidden="true" tabindex="-1"></a><span class="st">'</span></span>
+<span id="cb58-36"><a href="#cb58-36" aria-hidden="true" tabindex="-1"></a>fig3 <span class="ot">&lt;-</span> composite <span class="sc">+</span> mat_marg<span class="sc">+</span>map_marg<span class="sc">+</span></span>
+<span id="cb58-37"><a href="#cb58-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_layout</span>(<span class="at">design =</span> layout)<span class="sc">+</span></span>
+<span id="cb58-38"><a href="#cb58-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_annotation</span>(<span class="at">tag_levels =</span> <span class="st">'a'</span>,</span>
+<span id="cb58-39"><a href="#cb58-39" aria-hidden="true" tabindex="-1"></a>                  <span class="at">tag_prefix =</span> <span class="st">'('</span>,</span>
+<span id="cb58-40"><a href="#cb58-40" aria-hidden="true" tabindex="-1"></a>                  <span class="at">tag_suffix =</span> <span class="st">')'</span>)<span class="sc">&amp;</span></span>
+<span id="cb58-41"><a href="#cb58-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.tag =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">'bold'</span>))</span>
+<span id="cb58-42"><a href="#cb58-42" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb58-43"><a href="#cb58-43" aria-hidden="true" tabindex="-1"></a>                  </span>
+<span id="cb58-44"><a href="#cb58-44" aria-hidden="true" tabindex="-1"></a>fig3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="Assign3_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="Assign3_files/figure-html/unnamed-chunk-30-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
